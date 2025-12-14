@@ -1,17 +1,18 @@
 import os
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from app.auth import get_current_active_user
+from app.auth import get_current_active_user, get_user_from_token
 from app.config import settings
 from app.database import get_db
 from app.models import User as UserModel, Sock as SockModel
 from app.schemas import Sock, SockCreate, SockMatchResponse, SockMatch, MatchConfirmation
 from app.services.image_preprocessing import image_preprocessor
 from app.services.clip_embedding import clip_service
+from app.db_utils import embedding_to_db, embedding_from_db, find_similar_socks
 from app.logging_config import get_logger
 import numpy as np
 
@@ -103,7 +104,7 @@ async def upload_sock(
             user_id=current_user.id,
             image_path=original_path,
             preprocessed_image_path=processed_path,
-            embedding=embedding.tolist(),
+            embedding=embedding_to_db(embedding),  # Convert to DB format (JSON for SQLite, list for PostgreSQL)
             dominant_color=features.get('dominant_color'),
             pattern_type=features.get('pattern_type'),
             texture_features=features.get('texture_features'),
@@ -175,10 +176,33 @@ async def get_sock(
 async def get_sock_image(
     sock_id: int,
     processed: bool = False,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
-    """Get sock image"""
+    """
+    Get sock image
+    
+    Supports authentication via:
+    - Authorization header (Bearer token) - preferred
+    - Query parameter 'token' - fallback for environments that don't support headers (e.g., web Image component)
+    """
+    # Try to get user from query token first, then fall back to header
+    try:
+        if token:
+            current_user = await get_user_from_token(token, db)
+        else:
+            # Try to get from header
+            from fastapi.security import OAuth2PasswordBearer
+            oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+            from app.auth import get_current_user
+            # This requires the Authorization header
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required. Provide token via Authorization header or 'token' query parameter."
+            )
+    except HTTPException:
+        raise
+    
     sock = db.query(SockModel).filter(
         SockModel.id == sock_id,
         SockModel.user_id == current_user.id
@@ -247,11 +271,11 @@ async def search_similar_socks(
             return SockMatchResponse(matches=[], total=0)
         
         # Calculate similarities
-        query_embedding = np.array(query_sock.embedding)
+        query_embedding = embedding_from_db(query_sock.embedding)
         matches = []
         
         for candidate in candidate_socks:
-            candidate_embedding = np.array(candidate.embedding)
+            candidate_embedding = embedding_from_db(candidate.embedding)
             similarity = clip_service.calculate_similarity(query_embedding, candidate_embedding)
             
             # Apply threshold

@@ -3,7 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from app.config import settings
 from app.database import get_db
@@ -129,3 +129,40 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+async def get_user_from_token(
+    token: str,
+    db: Session
+) -> UserModel:
+    """Get user from a JWT token string"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        
+        if username is None:
+            logger.error("Token payload missing 'sub' field")
+            raise credentials_exception
+        
+        token_data = TokenData(username=username)
+    except JWTError as e:
+        logger.error(f"JWT decode error: {e}")
+        raise credentials_exception
+    
+    user = db.query(UserModel).filter(UserModel.username == token_data.username).first()
+    
+    if user is None:
+        logger.error(f"User {token_data.username} not found")
+        raise credentials_exception
+    
+    if not user.is_active:
+        logger.error(f"User {token_data.username} is inactive")
+        raise HTTPException(status_code=400, detail="Inactive user")
+    
+    return user
