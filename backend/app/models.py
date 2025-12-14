@@ -1,8 +1,16 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from pgvector.sqlalchemy import Vector
 from app.database import Base
+from app.config import settings
+
+# Import pgvector only if using PostgreSQL
+if settings.DATABASE_URL.startswith("postgresql"):
+    from pgvector.sqlalchemy import Vector
+    use_pgvector = True
+else:
+    # For SQLite, use Text to store embedding as JSON
+    use_pgvector = False
 
 
 class User(Base):
@@ -29,7 +37,11 @@ class Sock(Base):
     preprocessed_image_path = Column(String)
     
     # Vector embedding (512 dimensions for CLIP ViT-B-32)
-    embedding = Column(Vector(512))
+    # Use pgvector for PostgreSQL, Text/JSON for SQLite
+    if use_pgvector:
+        embedding = Column(Vector(512))
+    else:
+        embedding = Column(Text)  # Store as JSON string for SQLite
     
     # Extracted features
     dominant_color = Column(String)  # Hex color code

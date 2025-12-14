@@ -22,12 +22,36 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate to 72 bytes to comply with bcrypt limit
+    password_bytes = plain_password.encode('utf-8')
+    if len(password_bytes) > 72:
+        logger.warning(
+            f"Password truncated during verification: "
+            f"original length={len(password_bytes)} bytes ({len(plain_password)} chars), "
+            f"password='{plain_password}'"
+        )
+        # Decode back to string after truncation, handling potential incomplete UTF-8 sequences
+        password_to_use = password_bytes[:72].decode('utf-8', errors='ignore')
+    else:
+        password_to_use = plain_password
+    return pwd_context.verify(password_to_use, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
-    return pwd_context.hash(password)
+    # Truncate to 72 bytes to comply with bcrypt limit
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        logger.warning(
+            f"Password truncated during hashing: "
+            f"original length={len(password_bytes)} bytes ({len(password)} chars), "
+            f"password='{password}'"
+        )
+        # Decode back to string after truncation, handling potential incomplete UTF-8 sequences
+        password_to_use = password_bytes[:72].decode('utf-8', errors='ignore')
+    else:
+        password_to_use = password
+    return pwd_context.hash(password_to_use)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

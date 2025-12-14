@@ -1,41 +1,42 @@
 # Web Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
 # Database
-sqlalchemy==2.0.25
-alembic==1.13.1
-psycopg2-binary==2.9.9
-asyncpg==0.29.0
-pgvector==0.2.4
+sqlalchemy>=2.0.25
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+asyncpg>=0.29.0
+pgvector>=0.2.4
 
 # Authentication
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-bcrypt==4.1.2
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1
 
 # Redis
-redis==5.0.1
-hiredis==2.3.2
+redis>=5.0.1
+hiredis>=2.3.2
 
 # Image Processing
-Pillow==10.2.0
-opencv-python-headless==4.9.0.80
-rembg==2.0.56
-numpy==1.26.3
+Pillow>=10.3.0
+opencv-python-headless>=4.9.0.80
+rembg>=2.0.56
+numpy>=1.26.3
 
 # Machine Learning
-torch==2.1.2
-torchvision==0.16.2
-transformers==4.37.0
-open-clip-torch==2.24.0
+torch>=2.1.2
+torchvision>=0.16.2
+transformers>=4.37.0
+open-clip-torch>=2.24.0
 
 # Utilities
-python-dotenv==1.0.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-scikit-learn==1.4.0
+python-dotenv>=1.0.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+email-validator>=2.0.0
+scikit-learn>=1.4.0
 
 # Logging
 loguru==0.7.2
