@@ -262,6 +262,56 @@ class CLIPEmbeddingService:
         except Exception as e:
             logger.error(f"Similarity calculation failed: {e}")
             return 0.0
+    
+    def calculate_color_similarity(self, hex_color1: str, hex_color2: str) -> float:
+        """
+        Calculate color similarity between two hex colors using perceptual color distance
+        
+        Args:
+            hex_color1: First hex color (e.g., "#FF0000")
+            hex_color2: Second hex color (e.g., "#FE0101")
+            
+        Returns:
+            Similarity score between 0 and 1 (1 = identical colors)
+        """
+        try:
+            # Convert hex to RGB
+            def hex_to_rgb(hex_color):
+                hex_color = hex_color.lstrip('#')
+                return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            
+            r1, g1, b1 = hex_to_rgb(hex_color1)
+            r2, g2, b2 = hex_to_rgb(hex_color2)
+            
+            # Calculate perceptual color distance (weighted Euclidean)
+            # Human eye is more sensitive to green, then red, then blue
+            # Using a simplified weighted formula
+            r_mean = (r1 + r2) / 2
+            delta_r = r1 - r2
+            delta_g = g1 - g2
+            delta_b = b1 - b2
+            
+            # Weighted color distance formula
+            weight_r = 2 + r_mean / 256
+            weight_g = 4.0
+            weight_b = 2 + (255 - r_mean) / 256
+            
+            distance = np.sqrt(
+                weight_r * delta_r ** 2 +
+                weight_g * delta_g ** 2 +
+                weight_b * delta_b ** 2
+            )
+            
+            # Normalize to [0, 1] range
+            # Maximum possible distance is roughly 765 (for weighted RGB)
+            max_distance = 765
+            similarity = 1.0 - min(distance / max_distance, 1.0)
+            
+            return float(similarity)
+            
+        except Exception as e:
+            logger.warning(f"Color similarity calculation failed: {e}")
+            return 0.0
 
 
 # Singleton instance
