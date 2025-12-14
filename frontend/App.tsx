@@ -11,6 +11,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import CameraScreen from './src/screens/CameraScreen';
+import ImageUploadScreen from './src/screens/ImageUploadScreen';
 import GraveyardScreen from './src/screens/GraveyardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
@@ -22,6 +23,15 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function CameraStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CameraMain" component={CameraScreen} />
+      <Stack.Screen name="ImageUpload" component={ImageUploadScreen} />
     </Stack.Navigator>
   );
 }
@@ -39,7 +49,7 @@ function MainTabs() {
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Camera" component={CameraScreen} />
+      <Tab.Screen name="Camera" component={CameraStack} />
       <Tab.Screen name="Graveyard" component={GraveyardScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>

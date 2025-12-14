@@ -8,14 +8,17 @@
 
 ### Key Features
 
+- 📸 **Camera Integration**: Take photos or upload from gallery directly in the app
 - 🎯 **AI-Powered Matching**: Uses OpenAI CLIP embeddings for highly accurate sock matching
-- 📸 **Smart Image Processing**: Automatic background removal and sock cropping
+- �️ **Smart Image Processing**: Automatic background removal and sock cropping
 - 🎨 **Feature Extraction**: Analyzes color, pattern, and texture
 - 🔒 **Secure Authentication**: JWT-based auth with bcrypt password hashing
 - 📱 **Cross-Platform**: Works on iOS, Android, and Web (via React Native/Expo)
 - 🎭 **Most Wanted Theme**: Unique wanted poster aesthetic with dark/light mode
 - 🐳 **Docker-Ready**: One command deployment with docker-compose
 - 🔍 **Vector Search**: Powered by PostgreSQL with pgvector extension
+
+> **New!** Full camera and image upload functionality is now available! See [CAMERA_GUIDE.md](CAMERA_GUIDE.md) for details.
 
 ## 🏗️ Architecture
 

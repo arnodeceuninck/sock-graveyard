@@ -85,12 +85,40 @@ class ApiService {
   async uploadSock(imageUri: string, description?: string) {
     const formData = new FormData();
     
-    // @ts-ignore - React Native handles file upload differently
-    formData.append('file', {
-      uri: imageUri,
-      type: 'image/jpeg',
-      name: 'sock.jpg',
-    });
+    // Handle file upload differently for web vs native
+    if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
+      // Web: fetch the blob first
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      // @ts-ignore - File constructor works in web environment
+      const file = new File([blob], 'sock.jpg', { type: blob.type || 'image/jpeg' });
+      formData.append('file', file);
+    } else if (imageUri.startsWith('file://')) {
+      // Mobile: Use the file URI directly
+      // @ts-ignore - React Native handles file upload differently
+      formData.append('file', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: 'sock.jpg',
+      } as any);
+    } else {
+      // Web (blob URI): Try to fetch as blob
+      try {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        // @ts-ignore - File constructor works in web environment
+        const file = new File([blob], 'sock.jpg', { type: blob.type || 'image/jpeg' });
+        formData.append('file', file);
+      } catch (error) {
+        // Fallback for React Native
+        // @ts-ignore
+        formData.append('file', {
+          uri: imageUri,
+          type: 'image/jpeg',
+          name: 'sock.jpg',
+        } as any);
+      }
+    }
 
     if (description) {
       formData.append('description', description);
