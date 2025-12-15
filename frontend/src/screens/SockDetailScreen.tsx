@@ -178,9 +178,12 @@ export default function SockDetailScreen({ route, navigation }: any) {
           SOCK FEATURES
         </Text>
         {sock.dominant_color && (
-          <Text style={[styles.featureText, { color: colors.text }]}>
-            Color: {sock.dominant_color}
-          </Text>
+          <View style={styles.featureRow}>
+            <View style={[styles.colorSwatch, { backgroundColor: sock.dominant_color }]} />
+            <Text style={[styles.featureText, { color: colors.text }]}>
+              Color: {sock.dominant_color}
+            </Text>
+          </View>
         )}
         {sock.pattern_type && (
           <Text style={[styles.featureText, { color: colors.text }]}>
@@ -247,9 +250,12 @@ export default function SockDetailScreen({ route, navigation }: any) {
                   </Text>
                 )}
                 {match.sock?.dominant_color && (
-                  <Text style={[styles.matchFeature, { color: colors.textSecondary }]}>
-                    Color: {match.sock.dominant_color}
-                  </Text>
+                  <View style={styles.matchFeatureRow}>
+                    <View style={[styles.colorSwatch, { backgroundColor: match.sock.dominant_color }]} />
+                    <Text style={[styles.matchFeature, { color: colors.textSecondary }]}>
+                      Color: {match.sock.dominant_color}
+                    </Text>
+                  </View>
                 )}
                 {match.sock?.pattern_type && (
                   <Text style={[styles.matchFeature, { color: colors.textSecondary }]}>
@@ -384,6 +390,19 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     letterSpacing: 1,
   },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  colorSwatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#8B4513',
+    marginRight: Spacing.sm,
+  },
   featureText: {
     fontSize: Typography.fontSize.md,
     marginBottom: Spacing.xs,
@@ -467,6 +486,11 @@ const styles = StyleSheet.create({
   },
   matchDescription: {
     fontSize: Typography.fontSize.md,
+    marginBottom: Spacing.xs,
+  },
+  matchFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: Spacing.xs,
   },
   matchFeature: {
