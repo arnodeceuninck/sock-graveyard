@@ -7,7 +7,8 @@ import {
   TextInput, 
   ScrollView,
   ActivityIndicator,
-  Alert 
+  Alert,
+  FlatList 
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/Button';
@@ -15,20 +16,56 @@ import ApiService from '../services/api';
 import { Spacing, Typography } from '../constants/theme';
 
 export default function ImageUploadScreen({ route, navigation }: any) {
-  const { imageUri } = route.params;
+  const { imageUri, imageUris } = route.params;
   const { colors } = useTheme();
   const [description, setDescription] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+
+  // Determine if we're in multi-upload mode
+  const isMultiUpload = imageUris && imageUris.length > 1;
+  const imagesToUpload = isMultiUpload ? imageUris : [imageUri];
 
   const handleUpload = async () => {
     try {
       setUploading(true);
       
-      // Upload the image
-      const result = await ApiService.uploadSock(imageUri, description || undefined);
-      
-      // Navigate directly to the sock detail screen
-      navigation.navigate('SockDetail', { sockId: result.id });
+      if (isMultiUpload) {
+        // Multi-image upload
+        setUploadProgress({ current: 0, total: imagesToUpload.length });
+        const results = [];
+        
+        for (let i = 0; i < imagesToUpload.length; i++) {
+          setUploadProgress({ current: i + 1, total: imagesToUpload.length });
+          const result = await ApiService.uploadSock(imagesToUpload[i], description || undefined);
+          results.push(result);
+        }
+        
+        // Show success message
+        Alert.alert(
+          'Upload Complete',
+          `Successfully uploaded ${results.length} sock${results.length > 1 ? 's' : ''}!`,
+          [
+            {
+              text: 'View Socks',
+              onPress: () => {
+                // First navigate back to clear the ImageUpload screen from stack
+                navigation.goBack();
+                // Then navigate to Home tab
+                setTimeout(() => {
+                  navigation.getParent()?.navigate('Home');
+                }, 50);
+              }
+            }
+          ]
+        );
+      } else {
+        // Single image upload - keep original behavior
+        const result = await ApiService.uploadSock(imageUri, description || undefined);
+        
+        // Navigate directly to the sock detail screen
+        navigation.navigate('SockDetail', { sockId: result.id });
+      }
       
     } catch (error: any) {
       console.error('Upload failed:', error);
@@ -76,25 +113,53 @@ export default function ImageUploadScreen({ route, navigation }: any) {
       contentContainerStyle={styles.contentContainer}
     >
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.wanted }]}>REVIEW & UPLOAD</Text>
+        <Text style={[styles.title, { color: colors.wanted }]}>
+          {isMultiUpload ? 'REVIEW & UPLOAD MULTIPLE' : 'REVIEW & UPLOAD'}
+        </Text>
         <Text style={[styles.subtitle, { color: colors.text }]}>
-          Check your photo and add details
+          {isMultiUpload 
+            ? `${imagesToUpload.length} socks selected for upload`
+            : 'Check your photo and add details'
+          }
         </Text>
       </View>
 
-      <View style={styles.imageContainer}>
-        <View style={[styles.posterFrame, { borderColor: colors.wanted }]}>
-          <Image 
-            source={{ uri: imageUri }} 
-            style={styles.image}
-            resizeMode="contain"
+      {isMultiUpload ? (
+        // Multi-image grid view
+        <View style={styles.multiImageContainer}>
+          <FlatList
+            data={imagesToUpload}
+            numColumns={2}
+            keyExtractor={(item, index) => `image-${index}`}
+            renderItem={({ item }) => (
+              <View style={[styles.gridImageFrame, { borderColor: colors.wanted }]}>
+                <Image 
+                  source={{ uri: item }} 
+                  style={styles.gridImage}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+            columnWrapperStyle={styles.gridRow}
+            scrollEnabled={false}
           />
         </View>
-      </View>
+      ) : (
+        // Single image view
+        <View style={styles.imageContainer}>
+          <View style={[styles.posterFrame, { borderColor: colors.wanted }]}>
+            <Image 
+              source={{ uri: imageUri }} 
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      )}
 
       <View style={[styles.formContainer, { backgroundColor: colors.surface }]}>
         <Text style={[styles.label, { color: colors.text }]}>
-          Description (Optional)
+          {isMultiUpload ? 'Description for all socks (Optional)' : 'Description (Optional)'}
         </Text>
         <TextInput
           style={[
@@ -123,13 +188,16 @@ export default function ImageUploadScreen({ route, navigation }: any) {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.wanted} />
             <Text style={[styles.loadingText, { color: colors.text }]}>
-              Processing image and searching for matches...
+              {isMultiUpload 
+                ? `Uploading sock ${uploadProgress.current} of ${uploadProgress.total}...`
+                : 'Processing image and searching for matches...'
+              }
             </Text>
           </View>
         ) : (
           <>
             <Button
-              title="🔍 Upload & Find Matches"
+              title={isMultiUpload ? `🔍 Upload ${imagesToUpload.length} Socks` : '🔍 Upload & Find Matches'}
               onPress={handleUpload}
               style={styles.uploadButton}
             />
@@ -182,6 +250,25 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
   },
   image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
+  },
+  multiImageContainer: {
+    padding: Spacing.lg,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  gridImageFrame: {
+    borderWidth: 3,
+    borderRadius: 8,
+    padding: Spacing.xs,
+    width: '48%',
+    aspectRatio: 1,
+  },
+  gridImage: {
     width: '100%',
     height: '100%',
     borderRadius: 4,

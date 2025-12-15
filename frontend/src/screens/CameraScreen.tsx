@@ -59,13 +59,21 @@ export default function CameraScreen({ navigation }: any) {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false, // Disable editing to allow multiple selection
+        allowsMultipleSelection: true, // Enable multiple selection
         quality: 1,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        navigation.navigate('ImageUpload', { imageUri: result.assets[0].uri });
+        // Extract URIs from all selected assets
+        const imageUris = result.assets.map(asset => asset.uri);
+        
+        // Navigate with array of URIs
+        navigation.navigate('ImageUpload', { 
+          imageUris: imageUris,
+          // Keep single imageUri for backward compatibility with single image
+          imageUri: imageUris.length === 1 ? imageUris[0] : undefined
+        });
       }
     } catch (error) {
       console.error('Error picking image:', error);
