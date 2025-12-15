@@ -91,7 +91,8 @@ export default function HomeScreen({ navigation }: any) {
               subtitle={item.description || 'No description'}
               reward="FIND YOUR MATCH"
               onPress={() => {
-                // Navigate to search results
+                // Navigate to sock detail screen
+                navigation.navigate('SockDetail', { sockId: item.id });
               }}
             >
               <View style={styles.sockContent}>

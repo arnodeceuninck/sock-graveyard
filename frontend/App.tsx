@@ -12,6 +12,7 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import ImageUploadScreen from './src/screens/ImageUploadScreen';
+import SockDetailScreen from './src/screens/SockDetailScreen';
 import GraveyardScreen from './src/screens/GraveyardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
@@ -32,6 +33,16 @@ function CameraStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CameraMain" component={CameraScreen} />
       <Stack.Screen name="ImageUpload" component={ImageUploadScreen} />
+      <Stack.Screen name="SockDetail" component={SockDetailScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="SockDetail" component={SockDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -48,7 +59,7 @@ function MainTabs() {
         },
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Camera" component={CameraStack} />
       <Tab.Screen name="Graveyard" component={GraveyardScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

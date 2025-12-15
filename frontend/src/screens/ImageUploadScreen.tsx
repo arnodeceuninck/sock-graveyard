@@ -27,28 +27,9 @@ export default function ImageUploadScreen({ route, navigation }: any) {
       // Upload the image
       const result = await ApiService.uploadSock(imageUri, description || undefined);
       
-      Alert.alert(
-        'Success!',
-        'Your sock has been added to the graveyard. Now searching for matches...',
-        [
-          {
-            text: 'View Matches',
-            onPress: () => {
-              // Navigate to search results for this sock
-              navigation.navigate('Home', { 
-                sockId: result.id,
-                searchMatches: true 
-              });
-            }
-          },
-          {
-            text: 'Add Another',
-            onPress: () => {
-              navigation.navigate('Camera');
-            }
-          }
-        ]
-      );
+      // Navigate directly to the sock detail screen
+      navigation.navigate('SockDetail', { sockId: result.id });
+      
     } catch (error: any) {
       console.error('Upload failed:', error);
       Alert.alert(
