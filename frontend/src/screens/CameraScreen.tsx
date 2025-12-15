@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions, Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/Button';
@@ -8,10 +8,10 @@ import { Spacing, Typography } from '../constants/theme';
 
 export default function CameraScreen({ navigation }: any) {
   const { colors } = useTheme();
-  const [facing, setFacing] = useState(CameraType.back);
-  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [permission, requestPermission] = useCameraPermissions();
   const [showCamera, setShowCamera] = useState(false);
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<CameraView>(null);
 
   // Request permissions on mount
   React.useEffect(() => {
@@ -74,15 +74,15 @@ export default function CameraScreen({ navigation }: any) {
   };
 
   const toggleCameraFacing = () => {
-    setFacing(current => (current === CameraType.back ? CameraType.front : CameraType.back));
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
   };
 
   if (showCamera) {
     return (
       <View style={styles.cameraContainer}>
-        <Camera 
+        <CameraView 
           style={styles.camera} 
-          type={facing}
+          facing={facing}
           ref={cameraRef}
         >
           <View style={styles.cameraControls}>
@@ -107,7 +107,7 @@ export default function CameraScreen({ navigation }: any) {
               <Text style={[styles.controlButtonText, { color: colors.text }]}>🔄</Text>
             </TouchableOpacity>
           </View>
-        </Camera>
+        </CameraView>
       </View>
     );
   }
