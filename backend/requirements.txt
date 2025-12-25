@@ -1,3 +1,6 @@
+# Sock Matcher ML Models (local package)
+-e ../model
+
 # Web Framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
@@ -19,13 +22,13 @@ bcrypt==4.0.1
 redis>=5.0.1
 hiredis>=2.3.2
 
-# Image Processing
+# Image Processing (now provided by model package, but keeping for backwards compatibility)
 Pillow>=10.3.0
 opencv-python-headless>=4.9.0.80
 rembg>=2.0.56
 numpy>=1.26.3
 
-# Machine Learning
+# Machine Learning (now provided by model package, but keeping for backwards compatibility)
 torch>=2.1.2
 torchvision>=0.16.2
 transformers>=4.37.0

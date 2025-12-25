@@ -34,7 +34,7 @@ class StandaloneImagePreprocessor:
     """Adapter for ImagePreprocessor that works with file paths instead of bytes"""
     
     def __init__(self):
-        from app.services.image_preprocessing import ImagePreprocessor
+        from sock_matcher import ImagePreprocessor
         self._preprocessor = ImagePreprocessor()
     
     def preprocess_image(self, image_path: str, output_path: Optional[str] = None) -> Optional[str]:
@@ -87,7 +87,7 @@ class StandaloneCLIPEmbeddingService:
     """Adapter for CLIPEmbeddingService that works with file paths"""
     
     def __init__(self):
-        from app.services.clip_embedding import CLIPEmbeddingService
+        from sock_matcher import CLIPEmbeddingService
         self._clip_service = CLIPEmbeddingService()
     
     def generate_embedding(self, image_path: str):
