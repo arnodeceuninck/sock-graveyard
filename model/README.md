@@ -9,6 +9,12 @@ This package contains:
 - **Image Preprocessing**: Remove backgrounds, crop, resize, and enhance sock images
 - **Feature Extraction**: Extract visual features like dominant color, patterns, and textures
 
+## Quick Links
+
+- 📚 **[Getting Started Guide](GETTING_STARTED.md)** - Quick start for developers
+- 🧪 **[Example Scripts](examples/README.md)** - Working examples and demos
+- ⚙️ **[Configuration](#configuration-options)** - Model configuration options
+
 ## Installation
 
 ### As a library (for backend integration)
@@ -127,6 +133,31 @@ print(f"Using device: {clip_service.device}")  # cuda or cpu
 |-----------|---------|-------------|
 | `CLIP_MODEL_NAME` | `ViT-B-32` | CLIP model architecture |
 | `CLIP_PRETRAINED` | `openai` | Pretrained weights dataset |
+
+## Example Scripts
+
+The `examples/` directory contains ready-to-run scripts demonstrating the package:
+
+- **`compare_socks.py`** - Compare multiple sock images
+- **`test_models.py`** - Benchmark different CLIP models
+- **`feature_demo.py`** - Extract and display all features
+- **`batch_process.py`** - Process directories of images
+
+See [examples/README.md](examples/README.md) for usage details.
+
+```bash
+# Compare socks
+python examples/compare_socks.py sock1.jpg sock2.jpg sock3.jpg
+
+# Test different models
+python examples/test_models.py sock1.jpg sock2.jpg
+
+# Extract features
+python examples/feature_demo.py my_sock.jpg
+
+# Batch process a directory
+python examples/batch_process.py ./sock_images
+```
 
 ## Development
 
