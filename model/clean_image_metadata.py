@@ -20,7 +20,7 @@ from PIL import Image
 from datetime import datetime
 
 
-def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_mapping: bool = True):
+def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_mapping: bool = True, auto_group: bool = False):
     """
     Remove all metadata from images and rename them.
     
@@ -28,6 +28,8 @@ def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_ma
         image_dir: Directory containing images to process
         output_dir: Directory to save cleaned images (defaults to same as input)
         create_mapping: Whether to create a JSON file mapping new names to old names
+        auto_group: If True, groups images by pairs (sorted by timestamp). 
+                   Each pair gets the same GUID with -0 and -1 suffixes.
     """
     image_path = Path(image_dir)
     
@@ -62,7 +64,31 @@ def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_ma
         print("(Files starting with 'sock-' are skipped as already processed)")
         return
     
-    print(f"Found {len(image_files)} image(s) to process")
+    # Sort by capture time (EXIF) if auto-grouping
+    if auto_group:
+        def get_capture_time(file_path):
+            """Extract capture time from EXIF data, fall back to modification time."""
+            try:
+                with Image.open(file_path) as img:
+                    exif_data = img.getexif()
+                    if exif_data:
+                        # Try DateTimeOriginal (when photo was taken)
+                        if 36867 in exif_data:  # DateTimeOriginal
+                            return datetime.strptime(exif_data[36867], '%Y:%m:%d %H:%M:%S')
+                        # Try DateTime as fallback
+                        if 306 in exif_data:  # DateTime
+                            return datetime.strptime(exif_data[306], '%Y:%m:%d %H:%M:%S')
+            except Exception:
+                pass
+            # Fall back to file modification time
+            return datetime.fromtimestamp(file_path.stat().st_mtime)
+        
+        image_files.sort(key=get_capture_time)
+        print(f"Found {len(image_files)} image(s) to process (sorted by capture time for auto-grouping)")
+        if len(image_files) % 2 != 0:
+            print(f"⚠ Warning: Odd number of images ({len(image_files)}). Last image will be unpaired.")
+    else:
+        print(f"Found {len(image_files)} image(s) to process")
     
     # Mapping of new filenames to original filenames
     filename_mapping = {}
@@ -87,13 +113,32 @@ def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_ma
                 elif img.mode != 'RGB':
                     img = img.convert('RGB')
                 
-                # Generate a new filename with first section of GUID
-                full_guid = str(uuid.uuid4())
-                # Use only the first section of the GUID (8 characters)
-                short_guid = full_guid.split('-')[0]
-                # Keep original extension, but convert to .jpg for consistency
-                # End with -0 to allow for multiple pictures of the same sock (-1, -2, etc.)
-                new_filename = f"sock-{short_guid}-0.jpg"
+                # Generate GUID and filename
+                if auto_group:
+                    # For auto-grouping, pair consecutive images
+                    pair_index = (idx - 1) // 2
+                    sock_index = (idx - 1) % 2  # 0 or 1
+                    
+                    # Generate or reuse GUID for this pair
+                    if sock_index == 0:
+                        # First sock of pair - generate new GUID
+                        full_guid = str(uuid.uuid4())
+                        short_guid = full_guid.split('-')[0]
+                        # Store for the second sock
+                        if not hasattr(remove_metadata_and_rename, '_current_guid'):
+                            remove_metadata_and_rename._current_guid = {}
+                        remove_metadata_and_rename._current_guid[pair_index] = (full_guid, short_guid)
+                    else:
+                        # Second sock of pair - reuse GUID
+                        full_guid, short_guid = remove_metadata_and_rename._current_guid[pair_index]
+                    
+                    new_filename = f"sock-{short_guid}-{sock_index}.jpg"
+                else:
+                    # Original behavior - unique GUID for each image
+                    full_guid = str(uuid.uuid4())
+                    short_guid = full_guid.split('-')[0]
+                    new_filename = f"sock-{short_guid}-0.jpg"
+                
                 new_filepath = output_path / new_filename
                 
                 # Save without metadata
@@ -115,6 +160,10 @@ def remove_metadata_and_rename(image_dir: str, output_dir: str = None, create_ma
                     'full_guid': full_guid,
                     'short_guid': short_guid
                 }
+                
+                if auto_group:
+                    filename_mapping[new_filename]['pair_index'] = pair_index
+                    filename_mapping[new_filename]['sock_index'] = sock_index
                 
         except Exception as e:
             print(f"  ✗ Error processing {image_file.name}: {e}")
@@ -173,6 +222,7 @@ def verify_metadata_removed(image_path: str):
 if __name__ == "__main__":
     # Configuration
     IMAGE_DIR = "images"  # Relative to this script's location
+    AUTO_GROUP = True  # Set to True to automatically pair consecutive images by timestamp
     
     # Get the directory where this script is located
     script_dir = Path(__file__).parent
@@ -182,6 +232,10 @@ if __name__ == "__main__":
     print("Image Metadata Cleaner")
     print("=" * 60)
     print(f"Image directory: {image_dir}")
+    if AUTO_GROUP:
+        print("Auto-grouping: ENABLED (pairs will share GUIDs)")
+    else:
+        print("Auto-grouping: DISABLED (each image gets unique GUID)")
     print()
     
     if not image_dir.exists():
@@ -189,7 +243,7 @@ if __name__ == "__main__":
         exit(1)
     
     # Process images
-    remove_metadata_and_rename(str(image_dir), create_mapping=True)
+    remove_metadata_and_rename(str(image_dir), create_mapping=True, auto_group=AUTO_GROUP)
     
     print("\n" + "=" * 60)
     print("IMPORTANT REMINDERS:")
