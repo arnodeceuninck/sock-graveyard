@@ -241,9 +241,11 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 300,
+    maxWidth: 400,
+    aspectRatio: 1,
     borderRadius: 8,
     marginBottom: 15,
+    alignSelf: 'center',
   },
   uploadingOverlay: {
     position: 'absolute',

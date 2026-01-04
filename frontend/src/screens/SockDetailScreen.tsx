@@ -210,8 +210,10 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 400,
+    maxWidth: 500,
+    aspectRatio: 1,
     backgroundColor: '#f0f0f0',
+    alignSelf: 'center',
   },
   content: {
     padding: 20,

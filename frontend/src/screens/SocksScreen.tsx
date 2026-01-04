@@ -8,6 +8,7 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { socksAPI, getTokenSync } from '../services/api';
@@ -17,6 +18,11 @@ export default function SocksScreen({ navigation }: any) {
   const [socks, setSocks] = useState<Sock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { width } = useWindowDimensions();
+  
+  // Calculate number of columns based on screen width
+  // Each card should be around 300-350px
+  const numColumns = Math.max(2, Math.min(6, Math.floor(width / 320)));
 
   const loadSocks = async () => {
     try {
@@ -103,8 +109,10 @@ export default function SocksScreen({ navigation }: any) {
           data={socks}
           renderItem={renderSockItem}
           keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
+          key={numColumns}
+          numColumns={numColumns}
           contentContainerStyle={styles.list}
+          columnWrapperStyle={styles.columnWrapper}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -148,9 +156,12 @@ const styles = StyleSheet.create({
   list: {
     padding: 10,
   },
+  columnWrapper: {
+    justifyContent: 'space-evenly',
+  },
   sockCard: {
-    flex: 1,
-    margin: 5,
+    margin: 10,
+    width: 280,
     backgroundColor: 'white',
     borderRadius: 8,
     overflow: 'hidden',
@@ -159,7 +170,7 @@ const styles = StyleSheet.create({
   },
   sockImage: {
     width: '100%',
-    height: 150,
+    aspectRatio: 1,
     backgroundColor: '#f0f0f0',
   },
   sockInfo: {
