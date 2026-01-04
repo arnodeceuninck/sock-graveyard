@@ -101,23 +101,23 @@ export const socksAPI = {
       } as any);
     }
 
-    const response = await api.post<Sock>('/socks/upload', formData);
+    const response = await api.post<Sock>('/singles/upload', formData);
     return response.data;
   },
 
   list: async (): Promise<Sock[]> => {
-    const response = await api.get<Sock[]>('/socks/list');
+    const response = await api.get<Sock[]>('/singles/list');
     return response.data;
   },
 
   get: async (sockId: number): Promise<Sock> => {
-    const response = await api.get<Sock>(`/socks/${sockId}`);
+    const response = await api.get<Sock>(`/singles/${sockId}`);
     return response.data;
   },
 
   getImageUrl: (sockId: number): string => {
     const token = getTokenSync();
-    return `${API_BASE_URL}/socks/${sockId}/image?token=${encodeURIComponent(token || '')}`;
+    return `${API_BASE_URL}/singles/${sockId}/image?token=${encodeURIComponent(token || '')}`;
   },
 
   search: async (uri: string, excludeSockId?: number): Promise<SockMatch[]> => {
@@ -138,8 +138,8 @@ export const socksAPI = {
     }
 
     const url = excludeSockId 
-      ? `/socks/search?exclude_sock_id=${excludeSockId}`
-      : '/socks/search';
+      ? `/singles/search?exclude_sock_id=${excludeSockId}`
+      : '/singles/search';
     
     const response = await api.post<SockMatch[]>(url, formData);
     return response.data;
@@ -149,17 +149,17 @@ export const socksAPI = {
 // Matches API
 export const matchesAPI = {
   create: async (data: MatchCreate): Promise<Match> => {
-    const response = await api.post<Match>('/socks/match', data);
+    const response = await api.post<Match>('/matches', data);
     return response.data;
   },
 
   list: async (): Promise<Match[]> => {
-    const response = await api.get<Match[]>('/socks/matches');
+    const response = await api.get<Match[]>('/matches');
     return response.data;
   },
 
   get: async (matchId: number): Promise<Match> => {
-    const response = await api.get<Match>(`/socks/matches/${matchId}`);
+    const response = await api.get<Match>(`/matches/${matchId}`);
     return response.data;
   },
 };
