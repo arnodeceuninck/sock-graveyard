@@ -65,9 +65,6 @@ export default function SimilarSocksList({
       
       setShowMatchModal(false);
       
-      // Show simple toast-style message
-      Alert.alert('Socks matched successfully!');
-      
       if (onMatchCreated) {
         onMatchCreated(match.id);
       }

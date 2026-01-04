@@ -117,8 +117,6 @@ export default function UploadScreen({ navigation }: any) {
       const sock = await socksAPI.upload(imageUri);
       setUploadedSockId(sock.id);
       
-      Alert.alert('Success', 'Sock uploaded successfully!');
-      
       // Automatically search for similar socks using the stored embedding
       try {
         const matches = await socksAPI.searchBySockId(sock.id);
