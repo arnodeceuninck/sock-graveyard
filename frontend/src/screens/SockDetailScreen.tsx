@@ -40,13 +40,13 @@ export default function SockDetailScreen({ route, navigation }: any) {
       if (Platform.OS === 'web') {
         try {
           const token = getTokenSync();
-          setAuthToken(token);
+          setAuthToken(token ?? '');
         } catch (e) {
           console.warn('[SockDetailScreen] Could not get token on web');
         }
       } else {
         const token = await getToken();
-        setAuthToken(token || '');
+        setAuthToken(token ?? '');
       }
       
       const data = await socksAPI.get(sockId);
@@ -91,6 +91,34 @@ export default function SockDetailScreen({ route, navigation }: any) {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!sock) return;
+
+    Alert.alert(
+      'Delete Sock',
+      'Are you sure you want to delete this sock? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await socksAPI.delete(sock.id);
+              Alert.alert('Success', 'Sock deleted successfully');
+              navigation.goBack();
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to delete sock');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const viewSockDetail = (sockId: number) => {
@@ -173,6 +201,18 @@ export default function SockDetailScreen({ route, navigation }: any) {
                 {isSearching ? 'Searching...' : 'Find Similar Socks'}
               </Text>
             </TouchableOpacity>
+
+            {!sock.is_matched && (
+              <TouchableOpacity
+                style={[styles.deleteButton, isSearching && styles.buttonDisabled]}
+                onPress={handleDelete}
+                disabled={isSearching}
+              >
+                <Text style={styles.deleteButtonText}>
+                  Delete Sock
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -296,11 +336,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',

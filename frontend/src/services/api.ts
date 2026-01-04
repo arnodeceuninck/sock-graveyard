@@ -180,7 +180,7 @@ export const socksAPI = {
     
     if (!token && isWeb) {
       try {
-        token = getTokenSync();
+        token = getTokenSync() ?? undefined;
       } catch (e) {
         console.warn('[API] Could not get token synchronously');
       }
@@ -194,7 +194,9 @@ export const socksAPI = {
     return `${API_BASE_URL}/singles/${sockId}/image`;
   },
 
-
+  delete: async (sockId: number): Promise<void> => {
+    await api.delete(`/singles/${sockId}`);
+  },
 };
 
 // Matches API
@@ -212,6 +214,12 @@ export const matchesAPI = {
   get: async (matchId: number): Promise<Match> => {
     const response = await api.get<Match>(`/matches/${matchId}`);
     return response.data;
+  },
+
+  delete: async (matchId: number, decouple: boolean = false): Promise<void> => {
+    await api.delete(`/matches/${matchId}`, {
+      params: { decouple },
+    });
   },
 };
 

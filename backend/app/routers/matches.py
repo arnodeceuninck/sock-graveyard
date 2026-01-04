@@ -130,3 +130,62 @@ def create_match(
     _ = new_match.sock2
     
     return new_match
+
+
+@router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_match(
+    match_id: int,
+    decouple: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a match.
+    - If decouple=True: Break the match and mark both socks as unmatched (socks remain)
+    - If decouple=False: Delete both socks and the match (default)
+    """
+    import os
+    from app.config import get_settings
+    
+    match = db.query(Match).filter(Match.id == match_id).first()
+    
+    if not match:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found"
+        )
+    
+    # Verify ownership
+    if match.sock1.owner_id != current_user.id or match.sock2.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this match"
+        )
+    
+    if decouple:
+        # Decouple: just break the match and mark socks as unmatched
+        match.sock1.is_matched = False
+        match.sock2.is_matched = False
+        db.delete(match)
+        db.commit()
+    else:
+        # Delete both socks and the match
+        sock1 = match.sock1
+        sock2 = match.sock2
+        
+        # Delete image files
+        for sock in [sock1, sock2]:
+            if os.path.exists(sock.image_path):
+                try:
+                    os.remove(sock.image_path)
+                except Exception as e:
+                    print(f"Failed to delete image file {sock.image_path}: {str(e)}")
+        
+        # Delete the match first (due to foreign key constraints)
+        db.delete(match)
+        # Then delete the socks
+        db.delete(sock1)
+        db.delete(sock2)
+        db.commit()
+    
+    return None

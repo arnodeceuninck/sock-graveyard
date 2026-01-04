@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
@@ -28,13 +29,13 @@ export default function MatchDetailScreen({ route, navigation }: any) {
       if (Platform.OS === 'web') {
         try {
           const token = getTokenSync();
-          setAuthToken(token);
+          setAuthToken(token ?? '');
         } catch (e) {
           // Token retrieval failed
         }
       } else {
         const token = await getToken();
-        setAuthToken(token || '');
+        setAuthToken(token ?? '');
       }
       
       const data = await matchesAPI.get(matchId);
@@ -63,6 +64,38 @@ export default function MatchDetailScreen({ route, navigation }: any) {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleDelete = (decouple: boolean) => {
+    if (!match) return;
+
+    const title = decouple ? 'Decouple Match' : 'Delete Match';
+    const message = decouple
+      ? 'This will break the match and move both socks back to singles. The socks will not be deleted.'
+      : 'This will permanently delete both socks and the match. This action cannot be undone.';
+
+    Alert.alert(title, message, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: decouple ? 'Decouple' : 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await matchesAPI.delete(match.id, decouple);
+            Alert.alert(
+              'Success',
+              decouple ? 'Match decoupled successfully' : 'Match deleted successfully'
+            );
+            navigation.goBack();
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to delete match');
+          }
+        },
+      },
+    ]);
   };
 
   if (isLoading) {
@@ -129,6 +162,34 @@ export default function MatchDetailScreen({ route, navigation }: any) {
           <Text style={styles.detailLabel}>Match Time:</Text>
           <Text style={styles.detailValue}>{formatTime(match.matched_at)}</Text>
         </View>
+      </View>
+
+      <View style={styles.actionsSection}>
+        <Text style={styles.sectionTitle}>Actions</Text>
+        
+        <TouchableOpacity
+          style={styles.decoupleButton}
+          onPress={() => handleDelete(true)}
+        >
+          <Text style={styles.decoupleButtonText}>
+            Decouple Match
+          </Text>
+          <Text style={styles.buttonSubtext}>
+            Break match and return socks to singles
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(false)}
+        >
+          <Text style={styles.deleteButtonText}>
+            Delete Match & Both Socks
+          </Text>
+          <Text style={styles.buttonSubtext}>
+            Permanently delete everything
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -226,5 +287,41 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
     marginLeft: 10,
+  },
+  actionsSection: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    margin: 15,
+  },
+  decoupleButton: {
+    backgroundColor: '#FF9500',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+  },
+  decoupleButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  buttonSubtext: {
+    color: 'white',
+    fontSize: 12,
+    opacity: 0.9,
   },
 });
