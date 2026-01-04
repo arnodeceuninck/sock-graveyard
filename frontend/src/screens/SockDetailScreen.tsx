@@ -74,11 +74,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
       const formData = new FormData();
       formData.append('file', blob, 'sock.jpg');
       
-      const matches = await socksAPI.search(imageUrl);
-      
-      // Filter out the current sock from results
-      const filteredMatches = matches.filter(match => match.sock_id !== sock.id);
-      setSimilarSocks(filteredMatches);
+      // Pass the sock ID to exclude it from results
+      const matches = await socksAPI.search(imageUrl, sock.id);
+      setSimilarSocks(matches);
       setShowResults(true);
     } catch (error: any) {
       Alert.alert('Search Failed', error.response?.data?.detail || 'Failed to search for similar socks');

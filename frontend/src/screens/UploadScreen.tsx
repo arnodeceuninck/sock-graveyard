@@ -98,8 +98,8 @@ export default function UploadScreen({ navigation }: any) {
       const sock = await socksAPI.upload(imageUri);
       setUploadedSockId(sock.id);
       
-      // Automatically search for similar socks after upload
-      const matches = await socksAPI.search(imageUri);
+      // Automatically search for similar socks after upload, excluding the uploaded sock
+      const matches = await socksAPI.search(imageUri, sock.id);
       setSimilarSocks(matches);
       setShowResults(true);
       

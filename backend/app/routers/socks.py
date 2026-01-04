@@ -173,7 +173,8 @@ async def search_similar_socks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
-    limit: int = 10
+    limit: int = 10,
+    exclude_sock_id: Optional[int] = Query(None, description="Sock ID to exclude from results")
 ):
     """Search for similar socks based on an uploaded image."""
     # Validate file type
@@ -206,6 +207,10 @@ async def search_similar_socks(
     # Calculate similarities
     matches = []
     for sock in socks:
+        # Skip the excluded sock if specified
+        if exclude_sock_id and sock.id == exclude_sock_id:
+            continue
+            
         sock_embedding = embedding_service.embedding_from_bytes(sock.embedding)
         similarity = embedding_service.calculate_similarity(query_embedding, sock_embedding)
         matches.append(SockMatch(sock_id=sock.id, similarity=similarity))

@@ -120,7 +120,7 @@ export const socksAPI = {
     return `${API_BASE_URL}/socks/${sockId}/image?token=${encodeURIComponent(token || '')}`;
   },
 
-  search: async (uri: string): Promise<SockMatch[]> => {
+  search: async (uri: string, excludeSockId?: number): Promise<SockMatch[]> => {
     const formData = new FormData();
     
     if (isWeb) {
@@ -137,7 +137,11 @@ export const socksAPI = {
       } as any);
     }
 
-    const response = await api.post<SockMatch[]>('/socks/search', formData);
+    const url = excludeSockId 
+      ? `/socks/search?exclude_sock_id=${excludeSockId}`
+      : '/socks/search';
+    
+    const response = await api.post<SockMatch[]>(url, formData);
     return response.data;
   },
 };
