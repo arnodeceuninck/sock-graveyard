@@ -146,3 +146,23 @@ docker-compose down -v
    - Pull latest code: `git pull`
    - Rebuild: `docker-compose up -d --build`
    - Check migrations run successfully
+
+
+## APK
+Current test api made with these settings:
+```
+# Install EAS CLI if you haven't
+npm install -g eas-cli
+
+# Login to your Expo account
+npx eas-cli login
+
+# Configure EAS Build
+npx eas-cli build:configure
+
+# Build for Android (production)
+npx eas-cli build --platform android --profile production
+```
+Somehow eas-cli randomly adds audio record permission, corresponds to this issue: https://github.com/expo/expo/issues/27040
+
+Currenty fails on this, need to fix an icon first : Error: [android.dangerous]: withAndroidDangerousBaseMod: ENOENT: no such file or directory, open './assets/adaptive-icon.png'

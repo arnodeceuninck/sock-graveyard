@@ -23,7 +23,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.sockgraveyard.app"
+      "package": "com.sockgraveyard.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,6 +38,11 @@
           "photosPermission": "The app needs access to your photos to upload sock images."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "152f4e71-0d36-47f9-bf9f-7c4fd512d0b4"
+      }
+    }
   }
 }

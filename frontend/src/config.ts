@@ -29,4 +29,8 @@ const getDevApiUrl = () => {
 
 // API is accessed via /api path on web (nginx routes this to backend)
 // On mobile (Expo Go), use the development machine's IP and port
-export const API_BASE_URL = process.env.API_BASE_URL || getDevApiUrl();
+// For production builds, use the production domain
+export const API_BASE_URL = process.env.API_BASE_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://socks.arnodece.com/api' 
+    : getDevApiUrl());
