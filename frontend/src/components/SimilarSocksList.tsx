@@ -5,7 +5,8 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
+  FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import { socksAPI } from '../services/api';
 import { SockMatch } from '../types';
@@ -21,9 +22,31 @@ export default function SimilarSocksList({
   onSockPress,
   showNoMatchMessage = true 
 }: SimilarSocksListProps) {
+  const { width } = useWindowDimensions();
+  
+  // Calculate number of columns based on screen width
+  const numColumns = Math.max(2, Math.min(6, Math.floor(width / 320)));
+  
   if (matches.length === 0 && !showNoMatchMessage) {
     return null;
   }
+
+  const renderMatchItem = ({ item }: { item: SockMatch }) => (
+    <TouchableOpacity
+      style={styles.matchCard}
+      onPress={() => onSockPress(item.sock_id)}
+    >
+      <Image
+        source={{
+          uri: socksAPI.getImageUrl(item.sock_id),
+        }}
+        style={styles.matchImage}
+      />
+      <Text style={styles.matchSimilarity}>
+        {(item.similarity * 100).toFixed(0)}% match
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -32,29 +55,16 @@ export default function SimilarSocksList({
       </Text>
 
       {matches.length > 0 ? (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.matchList}
-        >
-          {matches.map((match) => (
-            <TouchableOpacity
-              key={match.sock_id}
-              style={styles.matchCard}
-              onPress={() => onSockPress(match.sock_id)}
-            >
-              <Image
-                source={{
-                  uri: socksAPI.getImageUrl(match.sock_id),
-                }}
-                style={styles.matchImage}
-              />
-              <Text style={styles.matchSimilarity}>
-                {(match.similarity * 100).toFixed(0)}% match
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <FlatList
+          data={matches}
+          renderItem={renderMatchItem}
+          keyExtractor={(item) => item.sock_id.toString()}
+          key={numColumns}
+          numColumns={numColumns}
+          contentContainerStyle={styles.matchList}
+          columnWrapperStyle={styles.columnWrapper}
+          scrollEnabled={false}
+        />
       ) : (
         showNoMatchMessage && (
           <Text style={styles.noMatchText}>
@@ -77,10 +87,14 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   matchList: {
-    marginBottom: 20,
+    padding: 10,
+  },
+  columnWrapper: {
+    justifyContent: 'space-evenly',
   },
   matchCard: {
-    marginRight: 15,
+    margin: 10,
+    width: 280,
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 8,
@@ -89,10 +103,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   matchImage: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#f0f0f0',
   },
   matchSimilarity: {
     fontSize: 12,
