@@ -38,10 +38,14 @@ export default function UploadScreen({ navigation }: any) {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
+      const imageUri = result.assets[0].uri;
+      setSelectedImage(imageUri);
       setSimilarSocks([]);
       setShowResults(false);
       setUploadedSockId(null);
+      
+      // Automatically upload the image
+      await handleUpload(imageUri);
     }
   };
 
@@ -60,10 +64,14 @@ export default function UploadScreen({ navigation }: any) {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
+      const imageUri = result.assets[0].uri;
+      setSelectedImage(imageUri);
       setSimilarSocks([]);
       setShowResults(false);
       setUploadedSockId(null);
+      
+      // Automatically upload the image
+      await handleUpload(imageUri);
     }
   };
 
@@ -82,16 +90,16 @@ export default function UploadScreen({ navigation }: any) {
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedImage) return;
+  const handleUpload = async (imageUri: string) => {
+    if (!imageUri) return;
 
     setIsUploading(true);
     try {
-      const sock = await socksAPI.upload(selectedImage);
+      const sock = await socksAPI.upload(imageUri);
       setUploadedSockId(sock.id);
       
       // Automatically search for similar socks after upload
-      const matches = await socksAPI.search(selectedImage);
+      const matches = await socksAPI.search(imageUri);
       setSimilarSocks(matches);
       setShowResults(true);
       
@@ -154,17 +162,14 @@ export default function UploadScreen({ navigation }: any) {
           <View style={styles.imageContainer}>
             <Image source={{ uri: selectedImage }} style={styles.image} />
             
-            {!uploadedSockId ? (
-              <TouchableOpacity
-                style={[styles.uploadButton, isUploading && styles.buttonDisabled]}
-                onPress={handleUpload}
-                disabled={isUploading}
-              >
-                <Text style={styles.uploadButtonText}>
-                  {isUploading ? 'Uploading...' : 'Upload & Find Matches'}
-                </Text>
-              </TouchableOpacity>
-            ) : (
+            {isUploading && (
+              <View style={styles.uploadingOverlay}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.uploadingText}>Uploading...</Text>
+              </View>
+            )}
+            
+            {uploadedSockId && !isUploading && (
               <View style={styles.uploadedBadge}>
                 <Text style={styles.uploadedText}>✓ Uploaded</Text>
               </View>
@@ -232,6 +237,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     marginBottom: 20,
+    position: 'relative',
   },
   image: {
     width: '100%',
@@ -239,19 +245,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
   },
-  uploadButton: {
-    backgroundColor: '#007AFF',
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     borderRadius: 8,
-    padding: 15,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  uploadButtonText: {
+  uploadingText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    marginTop: 10,
   },
   uploadedBadge: {
     backgroundColor: '#34C759',
