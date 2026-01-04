@@ -85,51 +85,72 @@ export const authAPI = {
 // Socks API
 export const socksAPI = {
   upload: async (uri: string): Promise<Sock> => {
-    const formData = new FormData();
+    const maxRetries = 3;
+    let lastError: any;
     
-    if (isWeb) {
-      // For web, fetch the blob from the URI and create a File object
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      formData.append('file', blob, 'sock.jpg');
-    } else {
-      // For React Native - use the URI exactly as provided by ImagePicker
-      const fileName = uri.split('/').pop() || 'sock.jpg';
-      formData.append('file', {
-        uri: uri,
-        type: 'image/jpeg',
-        name: fileName,
-      } as any);
-    }
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const formData = new FormData();
+        
+        if (isWeb) {
+          // For web, fetch the blob from the URI and create a File object
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          formData.append('file', blob, 'sock.jpg');
+        } else {
+          // For React Native - use the URI exactly as provided by ImagePicker
+          const fileName = uri.split('/').pop() || 'sock.jpg';
+          formData.append('file', {
+            uri: uri,
+            type: 'image/jpeg',
+            name: fileName,
+          } as any);
+        }
 
-    if (!isWeb) {
-      // On mobile, use fetch API directly as axios has issues with FormData
-      const token = await getToken();
-      const response = await fetch(`${API_BASE_URL}/singles/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          // Don't set Content-Type - let fetch set it with boundary
-        },
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+        if (!isWeb) {
+          // On mobile, use fetch API directly as axios has issues with FormData
+          const token = await getToken();
+          const response = await fetch(`${API_BASE_URL}/singles/upload`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              // Don't set Content-Type - let fetch set it with boundary
+            },
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Upload failed: ${response.status} ${errorText}`);
+          }
+          
+          const data = await response.json();
+          return data;
+        } else {
+          // On web, use axios as usual
+          const response = await api.post<Sock>('/singles/upload', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          return response.data;
+        }
+      } catch (error: any) {
+        lastError = error;
+        
+        // If this was the last attempt, throw the error
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff: 1s, 2s)
+        const delayMs = attempt * 1000;
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
-      
-      const data = await response.json();
-      return data;
-    } else {
-      // On web, use axios as usual
-      const response = await api.post<Sock>('/singles/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
     }
+    
+    // Should never reach here, but just in case
+    throw lastError;
   },
 
   list: async (): Promise<Sock[]> => {
