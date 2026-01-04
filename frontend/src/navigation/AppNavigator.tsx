@@ -51,7 +51,7 @@ function MainTabs() {
         name="Socks"
         component={SocksScreen}
         options={{
-          tabBarLabel: 'My Socks',
+          tabBarLabel: 'Singles',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>🧦</Text>,
           headerRight: () => (
             <TouchableOpacity
