@@ -32,37 +32,29 @@ export default function SimilarSocksList({
       </Text>
 
       {matches.length > 0 ? (
-        <>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.matchList}
-          >
-            {matches.map((match) => (
-              <TouchableOpacity
-                key={match.sock_id}
-                style={styles.matchCard}
-                onPress={() => onSockPress(match.sock_id)}
-              >
-                <Image
-                  source={{
-                    uri: socksAPI.getImageUrl(match.sock_id),
-                  }}
-                  style={styles.matchImage}
-                />
-                <Text style={styles.matchSimilarity}>
-                  {(match.similarity * 100).toFixed(0)}% match
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {showNoMatchMessage && (
-            <Text style={styles.noMatchText}>
-              Don't see a match? Add this sock to your collection.
-            </Text>
-          )}
-        </>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.matchList}
+        >
+          {matches.map((match) => (
+            <TouchableOpacity
+              key={match.sock_id}
+              style={styles.matchCard}
+              onPress={() => onSockPress(match.sock_id)}
+            >
+              <Image
+                source={{
+                  uri: socksAPI.getImageUrl(match.sock_id),
+                }}
+                style={styles.matchImage}
+              />
+              <Text style={styles.matchSimilarity}>
+                {(match.similarity * 100).toFixed(0)}% match
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       ) : (
         showNoMatchMessage && (
           <Text style={styles.noMatchText}>

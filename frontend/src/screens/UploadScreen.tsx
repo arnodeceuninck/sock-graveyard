@@ -179,10 +179,6 @@ export default function UploadScreen({ navigation }: any) {
               onSockPress={viewSockDetail}
               showNoMatchMessage={true}
             />
-
-            <TouchableOpacity style={styles.addButton} onPress={addToCollection}>
-              <Text style={styles.addButtonText}>Add to Collection</Text>
-            </TouchableOpacity>
           </View>
         )}
 
