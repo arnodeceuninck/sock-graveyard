@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sock-network
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-sock_graveyard}
+      - TZ=Europe/Amsterdam
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  alembic-migration:
+    build: ./backend
+    command: alembic upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sock-network
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
+      - TZ=Europe/Amsterdam
+
+  backend:
+    build: ./backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      alembic-migration:
+        condition: service_completed_successfully
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - sock-network
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
+      - UPLOAD_DIR=/app/uploads
+      - TZ=Europe/Amsterdam
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - sock-network
+    environment:
+      - TZ=Europe/Amsterdam
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - sock-network
+
+volumes:
+  postgres-data:
+  uploads:
+
+networks:
+  sock-network:
+    driver: bridge

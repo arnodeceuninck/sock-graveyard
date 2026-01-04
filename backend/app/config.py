@@ -4,8 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "sqlite:///./sock_graveyard.db"  # Default to SQLite for debugging
-    # database_url: str = "postgresql://user:password@localhost/sock_graveyard"  # Uncomment for PostgreSQL
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/sock_graveyard"
     
     # Security
     secret_key: str = "your-secret-key-change-this-in-production"

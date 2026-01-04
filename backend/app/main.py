@@ -10,7 +10,8 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Sock Graveyard API",
     description="A minimal API for matching lost socks",
-    version="1.0.0"
+    version="1.0.0",
+    root_path="/api"
 )
 
 # Configure CORS
