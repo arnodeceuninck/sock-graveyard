@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Platform,
 } from 'react-native';
-import { matchesAPI, socksAPI } from '../services/api';
+import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
 
 export default function MatchesScreen({ navigation }: any) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string>('');
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -27,6 +29,19 @@ export default function MatchesScreen({ navigation }: any) {
   const loadMatches = async () => {
     setIsLoading(true);
     try {
+      // Get auth token for image URLs
+      if (Platform.OS === 'web') {
+        try {
+          const token = getTokenSync();
+          setAuthToken(token);
+        } catch (e) {
+          console.warn('[MatchesScreen] Could not get token on web');
+        }
+      } else {
+        const token = await getToken();
+        setAuthToken(token || '');
+      }
+      
       const data = await matchesAPI.list();
       setMatches(data);
     } catch (error: any) {
@@ -52,12 +67,12 @@ export default function MatchesScreen({ navigation }: any) {
     >
       <View style={styles.matchImages}>
         <Image
-          source={{ uri: socksAPI.getImageUrl(item.sock1_id) }}
+          source={{ uri: socksAPI.getImageUrl(item.sock1_id, authToken) }}
           style={styles.sockImage}
         />
         <Text style={styles.matchIcon}>💕</Text>
         <Image
-          source={{ uri: socksAPI.getImageUrl(item.sock2_id) }}
+          source={{ uri: socksAPI.getImageUrl(item.sock2_id, authToken) }}
           style={styles.sockImage}
         />
       </View>

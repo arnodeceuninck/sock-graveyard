@@ -21,8 +21,19 @@ export default function MatchDetailScreen({ route, navigation }: any) {
   }, [matchId]);
 
   const loadMatch = async () => {
-    try {
-      const data = await matchesAPI.get(matchId);
+    try {      // Get auth token for image URLs
+      if (Platform.OS === 'web') {
+        try {
+          const token = getTokenSync();
+          setAuthToken(token);
+        } catch (e) {
+          console.warn('[MatchDetailScreen] Could not get token on web');
+        }
+      } else {
+        const token = await getToken();
+        setAuthToken(token || '');
+      }
+            const data = await matchesAPI.get(matchId);
       setMatch(data);
     } catch (error: any) {
       Alert.alert('Error', 'Failed to load match details');

@@ -39,7 +39,7 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       await register({ username: username.trim(), password });
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Registration failed';
+      const message = error.response?.data?.detail || error.message || 'Registration failed';
       Alert.alert('Registration Failed', message);
     } finally {
       setIsLoading(false);

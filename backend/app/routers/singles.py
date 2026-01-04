@@ -1,7 +1,7 @@
 import os
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -115,19 +115,22 @@ def get_sock(
 def get_sock_image(
     sock_id: int,
     token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    """Get the image file for a specific sock. Supports token via query param for web compatibility."""
-    from app.auth import get_user_from_token, get_current_user, oauth2_scheme
-    from fastapi import Request
+    """Get the image file for a specific sock. Supports token via query param for web or Authorization header."""
+    from app.auth import get_user_from_token
     
-    # Try to get user from query parameter token first (for web img tags)
     current_user = None
+    
+    # Try query parameter token first (for web img tags)
     if token:
         current_user = get_user_from_token(token, db)
+    # Try Authorization header (for mobile/API requests)
+    elif authorization and authorization.startswith("Bearer "):
+        token_from_header = authorization.replace("Bearer ", "")
+        current_user = get_user_from_token(token_from_header, db)
     
-    # If no query token, this will fail with 401 if no Authorization header
-    # (for API calls that use headers)
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -167,53 +170,46 @@ def get_sock_image(
     )
 
 
-@router.post("/search", response_model=List[SockMatch])
-async def search_similar_socks(
-    file: UploadFile = File(...),
+@router.get("/{sock_id}/search", response_model=List[SockMatch])
+async def search_by_sock_id(
+    sock_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     embedding_service: EmbeddingService = Depends(get_embedding_service),
-    limit: int = 10,
-    exclude_sock_id: Optional[int] = Query(None, description="Sock ID to exclude from results")
+    limit: int = 10
 ):
-    """Search for similar socks based on an uploaded image."""
-    # Validate file type
-    if not file.content_type or not file.content_type.startswith("image/"):
+    """Search for similar socks using an existing sock's embedding."""
+    # Get the source sock
+    sock = db.query(Sock).filter(Sock.id == sock_id).first()
+    if not sock:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an image"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sock not found"
         )
     
-    # Create embedding for the search image
-    try:
-        content = await file.read()
-        # Create a temporary file-like object
-        from io import BytesIO
-        img_file = BytesIO(content)
-        query_embedding_bytes = embedding_service.create_embedding(img_file)
-        query_embedding = embedding_service.embedding_from_bytes(query_embedding_bytes)
-    except Exception as e:
+    # Verify ownership
+    if sock.owner_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create embedding: {str(e)}"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this sock"
         )
     
-    # Get all unmatched socks from the current user
+    # Get the embedding
+    query_embedding = embedding_service.embedding_from_bytes(sock.embedding)
+    
+    # Get all unmatched socks from the current user (excluding this one)
     socks = db.query(Sock).filter(
         Sock.owner_id == current_user.id,
-        Sock.is_matched == False
+        Sock.is_matched == False,
+        Sock.id != sock_id
     ).all()
     
     # Calculate similarities
     matches = []
-    for sock in socks:
-        # Skip the excluded sock if specified
-        if exclude_sock_id and sock.id == exclude_sock_id:
-            continue
-            
-        sock_embedding = embedding_service.embedding_from_bytes(sock.embedding)
+    for other_sock in socks:
+        sock_embedding = embedding_service.embedding_from_bytes(other_sock.embedding)
         similarity = embedding_service.calculate_similarity(query_embedding, sock_embedding)
-        matches.append(SockMatch(sock_id=sock.id, similarity=similarity))
+        matches.append(SockMatch(sock_id=other_sock.id, similarity=similarity))
     
     # Sort by similarity (highest first) and limit results
     matches.sort(key=lambda x: x.similarity, reverse=True)

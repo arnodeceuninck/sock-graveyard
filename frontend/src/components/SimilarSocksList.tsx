@@ -19,6 +19,7 @@ interface SimilarSocksListProps {
   showNoMatchMessage?: boolean;
   sourceSockId?: number; // The original sock we're finding matches for
   onMatchCreated?: () => void; // Callback when a match is created
+  authToken?: string; // Auth token for image URLs
 }
 
 export default function SimilarSocksList({ 
@@ -27,6 +28,7 @@ export default function SimilarSocksList({
   showNoMatchMessage = true,
   sourceSockId,
   onMatchCreated,
+  authToken = '',
 }: SimilarSocksListProps) {
   const { width } = useWindowDimensions();
   const [showMatchModal, setShowMatchModal] = useState(false);
@@ -86,7 +88,7 @@ export default function SimilarSocksList({
     >
       <Image
         source={{
-          uri: socksAPI.getImageUrl(item.sock_id),
+          uri: socksAPI.getImageUrl(item.sock_id, authToken),
         }}
         style={styles.matchImage}
       />

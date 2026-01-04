@@ -8,9 +8,10 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { socksAPI, getTokenSync } from '../services/api';
+import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
 
@@ -21,6 +22,7 @@ export default function UploadScreen({ navigation }: any) {
   const [similarSocks, setSimilarSocks] = useState<SockMatch[]>([]);
   const [uploadedSockId, setUploadedSockId] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -43,6 +45,9 @@ export default function UploadScreen({ navigation }: any) {
       setSimilarSocks([]);
       setShowResults(false);
       setUploadedSockId(null);
+      setAuthToken('');
+      setIsUploading(false);
+      setIsSearching(false);
       
       // Automatically upload the image
       await handleUpload(imageUri);
@@ -69,6 +74,9 @@ export default function UploadScreen({ navigation }: any) {
       setSimilarSocks([]);
       setShowResults(false);
       setUploadedSockId(null);
+      setAuthToken('');
+      setIsUploading(false);
+      setIsSearching(false);
       
       // Automatically upload the image
       await handleUpload(imageUri);
@@ -95,17 +103,35 @@ export default function UploadScreen({ navigation }: any) {
 
     setIsUploading(true);
     try {
+      // Get auth token for image URLs
+      if (Platform.OS === 'web') {
+        try {
+          const token = getTokenSync();
+          setAuthToken(token);
+        } catch (e) {
+          // Token retrieval failed
+        }
+      } else {
+        const token = await getToken();
+        setAuthToken(token || '');
+      }
+      
       const sock = await socksAPI.upload(imageUri);
       setUploadedSockId(sock.id);
       
-      // Automatically search for similar socks after upload, excluding the uploaded sock
-      const matches = await socksAPI.search(imageUri, sock.id);
-      setSimilarSocks(matches);
-      setShowResults(true);
+      Alert.alert('Success', 'Sock uploaded successfully!');
       
-      Alert.alert('Success', 'Sock uploaded! Check below for similar matches.');
+      // Automatically search for similar socks using the stored embedding
+      try {
+        const matches = await socksAPI.searchBySockId(sock.id);
+        setSimilarSocks(matches);
+        setShowResults(true);
+      } catch (searchError: any) {
+        // Search failure is non-critical
+        setShowResults(false);
+      }
     } catch (error: any) {
-      Alert.alert('Upload Failed', error.response?.data?.detail || 'Failed to upload sock');
+      Alert.alert('Upload Failed', error.response?.data?.detail || error.message || 'Failed to upload sock');
     } finally {
       setIsUploading(false);
     }
@@ -183,6 +209,7 @@ export default function UploadScreen({ navigation }: any) {
               matches={similarSocks}
               onSockPress={viewSockDetail}
               showNoMatchMessage={true}
+              authToken={authToken}
             />
           </View>
         )}

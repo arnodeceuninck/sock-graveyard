@@ -9,15 +9,17 @@ import {
   RefreshControl,
   ActivityIndicator,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { socksAPI, getTokenSync } from '../services/api';
+import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock } from '../types';
 
 export default function SocksScreen({ navigation }: any) {
   const [socks, setSocks] = useState<Sock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
   const { width } = useWindowDimensions();
   
   // Calculate number of columns based on screen width
@@ -26,6 +28,19 @@ export default function SocksScreen({ navigation }: any) {
 
   const loadSocks = async () => {
     try {
+      // Get auth token for image URLs
+      if (Platform.OS === 'web') {
+        try {
+          const token = getTokenSync();
+          setAuthToken(token);
+        } catch (e) {
+          console.warn('[SocksScreen] Could not get token on web');
+        }
+      } else {
+        const token = await getToken();
+        setAuthToken(token || '');
+      }
+      
       const data = await socksAPI.list();
       setSocks(data);
     } catch (error) {
@@ -63,7 +78,7 @@ export default function SocksScreen({ navigation }: any) {
     >
       <Image
         source={{
-          uri: socksAPI.getImageUrl(item.id),
+          uri: socksAPI.getImageUrl(item.id, authToken),
         }}
         style={styles.sockImage}
       />

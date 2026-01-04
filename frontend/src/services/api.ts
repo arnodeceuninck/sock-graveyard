@@ -93,16 +93,43 @@ export const socksAPI = {
       const blob = await response.blob();
       formData.append('file', blob, 'sock.jpg');
     } else {
-      // For React Native
+      // For React Native - use the URI exactly as provided by ImagePicker
+      const fileName = uri.split('/').pop() || 'sock.jpg';
       formData.append('file', {
-        uri,
+        uri: uri,
         type: 'image/jpeg',
-        name: 'sock.jpg',
+        name: fileName,
       } as any);
     }
 
-    const response = await api.post<Sock>('/singles/upload', formData);
-    return response.data;
+    if (!isWeb) {
+      // On mobile, use fetch API directly as axios has issues with FormData
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/singles/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type - let fetch set it with boundary
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } else {
+      // On web, use axios as usual
+      const response = await api.post<Sock>('/singles/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    }
   },
 
   list: async (): Promise<Sock[]> => {
@@ -115,35 +142,38 @@ export const socksAPI = {
     return response.data;
   },
 
-  getImageUrl: (sockId: number): string => {
-    const token = getTokenSync();
-    return `${API_BASE_URL}/singles/${sockId}/image?token=${encodeURIComponent(token || '')}`;
-  },
-
-  search: async (uri: string, excludeSockId?: number): Promise<SockMatch[]> => {
-    const formData = new FormData();
-    
-    if (isWeb) {
-      // For web, fetch the blob from the URI and create a File object
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      formData.append('file', blob, 'sock.jpg');
-    } else {
-      // For React Native
-      formData.append('file', {
-        uri,
-        type: 'image/jpeg',
-        name: 'sock.jpg',
-      } as any);
-    }
-
-    const url = excludeSockId 
-      ? `/singles/search?exclude_sock_id=${excludeSockId}`
-      : '/singles/search';
-    
-    const response = await api.post<SockMatch[]>(url, formData);
+  // Search for similar socks using an existing sock's ID (uses stored embedding)
+  searchBySockId: async (sockId: number, limit: number = 10): Promise<SockMatch[]> => {
+    const response = await api.get<SockMatch[]>(`/singles/${sockId}/search`, {
+      params: { limit },
+    });
     return response.data;
   },
+
+  // Get image URL with authentication token
+  // Pass token explicitly (from AsyncStorage on mobile, from localStorage on web)
+  getImageUrl: (sockId: number, token?: string): string => {
+    // Both web and mobile need token in URL because:
+    // - Web: <img> tags can't send custom headers
+    // - Mobile: React Native Image component doesn't send custom headers
+    
+    if (!token && isWeb) {
+      try {
+        token = getTokenSync();
+      } catch (e) {
+        console.warn('[API] Could not get token synchronously');
+      }
+    }
+    
+    if (token) {
+      return `${API_BASE_URL}/singles/${sockId}/image?token=${encodeURIComponent(token)}`;
+    }
+    
+    // Fallback without token (will fail auth but better than crashing)
+    return `${API_BASE_URL}/singles/${sockId}/image`;
+  },
+
+
 };
 
 // Matches API

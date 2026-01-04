@@ -4,7 +4,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/sock_graveyard"
+    # Default to SQLite for local development, PostgreSQL for Docker production
+    database_url: str = "sqlite:///./sock_graveyard.db"
     
     # Security
     secret_key: str = "your-secret-key-change-this-in-production"
@@ -12,7 +13,14 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24  # 24 hours
     
     # CORS
-    cors_origins: list[str] = ["https://socks.arnodece.com", "http://localhost", "http://localhost:19006"]
+    cors_origins: list[str] = [
+        "https://socks.arnodece.com", 
+        "http://localhost", 
+        "http://localhost:19006",
+        "http://192.168.0.148:19006",  # Local network access for mobile dev
+        "http://localhost:8081",        # Expo dev server
+        "http://192.168.0.148:8081",   # Expo dev server on network
+    ]
     
     # Storage
     upload_dir: str = "./uploads"

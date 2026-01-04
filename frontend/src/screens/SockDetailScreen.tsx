@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
-import { socksAPI } from '../services/api';
+import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock, SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
 
@@ -20,6 +21,7 @@ export default function SockDetailScreen({ route, navigation }: any) {
   const [isSearching, setIsSearching] = useState(false);
   const [similarSocks, setSimilarSocks] = useState<SockMatch[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
 
   useEffect(() => {
     loadSock();
@@ -27,6 +29,19 @@ export default function SockDetailScreen({ route, navigation }: any) {
 
   const loadSock = async () => {
     try {
+      // Get auth token for image URLs
+      if (Platform.OS === 'web') {
+        try {
+          const token = getTokenSync();
+          setAuthToken(token);
+        } catch (e) {
+          console.warn('[SockDetailScreen] Could not get token on web');
+        }
+      } else {
+        const token = await getToken();
+        setAuthToken(token || '');
+      }
+      
       const data = await socksAPI.get(sockId);
       setSock(data);
     } catch (error: any) {
@@ -60,26 +75,12 @@ export default function SockDetailScreen({ route, navigation }: any) {
 
     setIsSearching(true);
     try {
-      // We need to fetch the image and search with it
-      const imageUrl = socksAPI.getImageUrl(sock.id);
-      
-      // For web, fetch the image as a blob
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      
-      // Create a temporary file-like object with the blob
-      const file = new File([blob], 'sock.jpg', { type: 'image/jpeg' });
-      
-      // Create FormData and search
-      const formData = new FormData();
-      formData.append('file', blob, 'sock.jpg');
-      
-      // Pass the sock ID to exclude it from results
-      const matches = await socksAPI.search(imageUrl, sock.id);
+      // Use the sock ID search endpoint (uses stored embedding)
+      const matches = await socksAPI.searchBySockId(sock.id);
       setSimilarSocks(matches);
       setShowResults(true);
     } catch (error: any) {
-      Alert.alert('Search Failed', error.response?.data?.detail || 'Failed to search for similar socks');
+      Alert.alert('Search Failed', error.message || 'Failed to search for similar socks');
     } finally {
       setIsSearching(false);
     }
@@ -113,7 +114,7 @@ export default function SockDetailScreen({ route, navigation }: any) {
     <ScrollView style={styles.container}>
       <Image
         source={{
-          uri: socksAPI.getImageUrl(sock.id),
+          uri: socksAPI.getImageUrl(sock.id, authToken),
         }}
         style={styles.image}
       />
@@ -181,6 +182,7 @@ export default function SockDetailScreen({ route, navigation }: any) {
             onSockPress={viewSockDetail}
             showNoMatchMessage={false}
             sourceSockId={sock.id}
+            authToken={authToken}
             onMatchCreated={() => {
               // Reload sock data and clear results
               loadSock();
