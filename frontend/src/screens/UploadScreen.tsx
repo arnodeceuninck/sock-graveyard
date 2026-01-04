@@ -167,30 +167,14 @@ export default function UploadScreen({ navigation }: any) {
   };
 
   const handleMatchCreated = (matchId: number) => {
-    Alert.alert(
-      'Match Created!',
-      'Your socks have been matched together',
-      [
-        {
-          text: 'View Matches',
-          onPress: () => {
-            setSelectedImage(null);
-            setSimilarSocks([]);
-            setShowResults(false);
-            navigation.navigate('Matches');
-          },
-        },
-        {
-          text: 'Upload Another',
-          onPress: () => {
-            setSelectedImage(null);
-            setSimilarSocks([]);
-            setShowResults(false);
-            setUploadedSockId(null);
-          },
-        },
-      ]
-    );
+    // Clear the upload state so when user comes back, they see an empty upload page
+    setSelectedImage(null);
+    setSimilarSocks([]);
+    setShowResults(false);
+    setUploadedSockId(null);
+    
+    // Navigate to the match detail page
+    navigation.navigate('MatchDetail', { matchId });
   };
 
   return (
