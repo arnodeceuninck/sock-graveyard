@@ -71,23 +71,28 @@ export default function SocksScreen({ navigation }: any) {
     });
   };
 
-  const renderSockItem = ({ item }: { item: Sock }) => (
-    <TouchableOpacity
-      style={styles.sockCard}
-      onPress={() => navigation.navigate('SockDetail', { sockId: item.id })}
-    >
-      <Image
-        source={{
-          uri: socksAPI.getImageUrl(item.id, authToken),
-        }}
-        style={styles.sockImage}
-      />
-      <View style={styles.sockInfo}>
-        <Text style={styles.sockId}>Sock #{item.id}</Text>
-        <Text style={styles.sockDate}>Added {formatDate(item.created_at)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderSockItem = ({ item }: { item: Sock }) => {
+    // Calculate card width to fit columns with proper spacing
+    const cardWidth = (width - 40) / numColumns - 20; // Subtract padding and margins
+    
+    return (
+      <TouchableOpacity
+        style={[styles.sockCard, { width: cardWidth }]}
+        onPress={() => navigation.navigate('SockDetail', { sockId: item.id })}
+      >
+        <Image
+          source={{
+            uri: socksAPI.getImageUrl(item.id, authToken),
+          }}
+          style={styles.sockImage}
+        />
+        <View style={styles.sockInfo}>
+          <Text style={styles.sockId}>Sock #{item.id}</Text>
+          <Text style={styles.sockDate}>Added {formatDate(item.created_at)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -176,7 +181,6 @@ const styles = StyleSheet.create({
   },
   sockCard: {
     margin: 10,
-    width: 280,
     backgroundColor: 'white',
     borderRadius: 8,
     overflow: 'hidden',

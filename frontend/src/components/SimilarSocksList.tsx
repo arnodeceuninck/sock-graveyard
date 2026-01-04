@@ -81,22 +81,27 @@ export default function SimilarSocksList({
     }
   };
 
-  const renderMatchItem = ({ item }: { item: SockMatch }) => (
-    <TouchableOpacity
-      style={styles.matchCard}
-      onPress={() => handleSockPress(item.sock_id)}
-    >
-      <Image
-        source={{
-          uri: socksAPI.getImageUrl(item.sock_id, authToken),
-        }}
-        style={styles.matchImage}
-      />
-      <Text style={styles.matchSimilarity}>
-        {(item.similarity * 100).toFixed(0)}% match
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderMatchItem = ({ item }: { item: SockMatch }) => {
+    // Calculate card width to fit columns with proper spacing
+    const cardWidth = (width - 40) / numColumns - 20; // Subtract padding and margins
+    
+    return (
+      <TouchableOpacity
+        style={[styles.matchCard, { width: cardWidth }]}
+        onPress={() => handleSockPress(item.sock_id)}
+      >
+        <Image
+          source={{
+            uri: socksAPI.getImageUrl(item.sock_id, authToken),
+          }}
+          style={styles.matchImage}
+        />
+        <Text style={styles.matchSimilarity}>
+          {(item.similarity * 100).toFixed(0)}% match
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -181,7 +186,6 @@ const styles = StyleSheet.create({
   },
   matchCard: {
     margin: 10,
-    width: 280,
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 8,
