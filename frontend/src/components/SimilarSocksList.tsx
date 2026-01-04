@@ -18,7 +18,7 @@ interface SimilarSocksListProps {
   onSockPress: (sockId: number) => void;
   showNoMatchMessage?: boolean;
   sourceSockId?: number; // The original sock we're finding matches for
-  onMatchCreated?: () => void; // Callback when a match is created
+  onMatchCreated?: (matchId: number) => void; // Callback when a match is created
   authToken?: string; // Auth token for image URLs
 }
 
@@ -58,22 +58,19 @@ export default function SimilarSocksList({
 
     setIsCreatingMatch(true);
     try {
-      await matchesAPI.create({
+      const match = await matchesAPI.create({
         sock1_id: sourceSockId,
         sock2_id: selectedSockId,
       });
       
       setShowMatchModal(false);
-      Alert.alert('Success', 'Socks matched successfully!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (onMatchCreated) {
-              onMatchCreated();
-            }
-          },
-        },
-      ]);
+      
+      // Show simple toast-style message
+      Alert.alert('Socks matched successfully!');
+      
+      if (onMatchCreated) {
+        onMatchCreated(match.id);
+      }
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to create match');
     } finally {

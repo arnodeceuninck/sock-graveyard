@@ -183,11 +183,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
             showNoMatchMessage={false}
             sourceSockId={sock.id}
             authToken={authToken}
-            onMatchCreated={() => {
-              // Reload sock data and clear results
-              loadSock();
-              setSimilarSocks([]);
-              setShowResults(false);
+            onMatchCreated={(matchId) => {
+              // Replace current screen with match detail so back goes to socks list
+              navigation.replace('MatchDetail', { matchId });
             }}
           />
         )}

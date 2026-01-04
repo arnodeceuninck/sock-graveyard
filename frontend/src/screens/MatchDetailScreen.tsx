@@ -7,33 +7,37 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
-import { matchesAPI, socksAPI } from '../services/api';
+import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
 
 export default function MatchDetailScreen({ route, navigation }: any) {
   const { matchId } = route.params;
   const [match, setMatch] = useState<Match | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string>('');
 
   useEffect(() => {
     loadMatch();
   }, [matchId]);
 
   const loadMatch = async () => {
-    try {      // Get auth token for image URLs
+    try {
+      // Get auth token for image URLs
       if (Platform.OS === 'web') {
         try {
           const token = getTokenSync();
           setAuthToken(token);
         } catch (e) {
-          console.warn('[MatchDetailScreen] Could not get token on web');
+          // Token retrieval failed
         }
       } else {
         const token = await getToken();
         setAuthToken(token || '');
       }
-            const data = await matchesAPI.get(matchId);
+      
+      const data = await matchesAPI.get(matchId);
       setMatch(data);
     } catch (error: any) {
       Alert.alert('Error', 'Failed to load match details');
@@ -91,7 +95,7 @@ export default function MatchDetailScreen({ route, navigation }: any) {
         <View style={styles.socksContainer}>
           <View style={styles.sockContainer}>
             <Image
-              source={{ uri: socksAPI.getImageUrl(match.sock1.id) }}
+              source={{ uri: socksAPI.getImageUrl(match.sock1.id, authToken) }}
               style={styles.sockImage}
             />
             <Text style={styles.sockLabel}>Sock #{match.sock1.id}</Text>
@@ -102,7 +106,7 @@ export default function MatchDetailScreen({ route, navigation }: any) {
 
           <View style={styles.sockContainer}>
             <Image
-              source={{ uri: socksAPI.getImageUrl(match.sock2.id) }}
+              source={{ uri: socksAPI.getImageUrl(match.sock2.id, authToken) }}
               style={styles.sockImage}
             />
             <Text style={styles.sockLabel}>Sock #{match.sock2.id}</Text>
