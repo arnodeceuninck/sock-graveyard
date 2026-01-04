@@ -85,10 +85,6 @@ export default function MatchDetailScreen({ route, navigation }: any) {
         onPress: async () => {
           try {
             await matchesAPI.delete(match.id, decouple);
-            Alert.alert(
-              'Success',
-              decouple ? 'Match decoupled successfully' : 'Match deleted successfully'
-            );
             navigation.goBack();
           } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to delete match');

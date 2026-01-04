@@ -110,7 +110,6 @@ export default function SockDetailScreen({ route, navigation }: any) {
           onPress: async () => {
             try {
               await socksAPI.delete(sock.id);
-              Alert.alert('Success', 'Sock deleted successfully');
               navigation.goBack();
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to delete sock');
@@ -201,18 +200,6 @@ export default function SockDetailScreen({ route, navigation }: any) {
                 {isSearching ? 'Searching...' : 'Find Similar Socks'}
               </Text>
             </TouchableOpacity>
-
-            {!sock.is_matched && (
-              <TouchableOpacity
-                style={[styles.deleteButton, isSearching && styles.buttonDisabled]}
-                onPress={handleDelete}
-                disabled={isSearching}
-              >
-                <Text style={styles.deleteButtonText}>
-                  Delete Sock
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
 
@@ -235,6 +222,20 @@ export default function SockDetailScreen({ route, navigation }: any) {
               navigation.replace('MatchDetail', { matchId });
             }}
           />
+        )}
+
+        {!sock.is_matched && (
+          <View style={styles.deleteSection}>
+            <TouchableOpacity
+              style={[styles.deleteButton, isSearching && styles.buttonDisabled]}
+              onPress={handleDelete}
+              disabled={isSearching}
+            >
+              <Text style={styles.deleteButtonText}>
+                Delete Sock
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </ScrollView>
@@ -330,6 +331,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 10,
+  },
+  deleteSection: {
+    marginTop: 20,
   },
   actionButton: {
     backgroundColor: '#007AFF',

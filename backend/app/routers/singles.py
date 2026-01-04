@@ -215,3 +215,47 @@ async def search_by_sock_id(
     matches.sort(key=lambda x: x.similarity, reverse=True)
     
     return matches[:limit]
+
+
+@router.delete("/{sock_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_sock(
+    sock_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a sock and its image file."""
+    sock = db.query(Sock).filter(Sock.id == sock_id).first()
+    
+    if not sock:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sock not found"
+        )
+    
+    # Verify ownership
+    if sock.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this sock"
+        )
+    
+    # Check if sock is matched
+    if sock.is_matched:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a matched sock. Delete the match first."
+        )
+    
+    # Delete the image file if it exists
+    if os.path.exists(sock.image_path):
+        try:
+            os.remove(sock.image_path)
+        except Exception as e:
+            # Log error but continue with database deletion
+            print(f"Failed to delete image file {sock.image_path}: {str(e)}")
+    
+    # Delete the sock from database
+    db.delete(sock)
+    db.commit()
+    
+    return None
