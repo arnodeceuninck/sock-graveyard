@@ -166,6 +166,33 @@ export default function UploadScreen({ navigation }: any) {
     navigation.navigate('SockDetail', { sockId });
   };
 
+  const handleMatchCreated = (matchId: number) => {
+    Alert.alert(
+      'Match Created!',
+      'Your socks have been matched together',
+      [
+        {
+          text: 'View Matches',
+          onPress: () => {
+            setSelectedImage(null);
+            setSimilarSocks([]);
+            setShowResults(false);
+            navigation.navigate('Matches');
+          },
+        },
+        {
+          text: 'Upload Another',
+          onPress: () => {
+            setSelectedImage(null);
+            setSimilarSocks([]);
+            setShowResults(false);
+            setUploadedSockId(null);
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -207,6 +234,8 @@ export default function UploadScreen({ navigation }: any) {
               matches={similarSocks}
               onSockPress={viewSockDetail}
               showNoMatchMessage={true}
+              sourceSockId={uploadedSockId || undefined}
+              onMatchCreated={handleMatchCreated}
               authToken={authToken}
             />
           </View>
