@@ -1,27 +1,18 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import ApiService from '../services/api';
-
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  created_at: string;
-  is_active: boolean;
-}
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authAPI, saveToken, getToken, removeToken } from '../services/api';
+import { User, LoginRequest, RegisterRequest } from '../types';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,72 +22,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkAuth = async () => {
     try {
-      const isAuth = await ApiService.isAuthenticated();
-      if (isAuth) {
-        const userData = await ApiService.getCurrentUser();
+      const token = await getToken();
+      if (token) {
+        const userData = await authAPI.me();
         setUser(userData);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      await removeToken();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (username: string, password: string) => {
-    setIsLoading(true);
-    try {
-      await ApiService.login(username, password);
-      const userData = await ApiService.getCurrentUser();
-      setUser(userData);
-    } finally {
-      setIsLoading(false);
-    }
+  const login = async (data: LoginRequest) => {
+    const response = await authAPI.login(data);
+    await saveToken(response.access_token);
+    const userData = await authAPI.me();
+    setUser(userData);
   };
 
-  const register = async (email: string, username: string, password: string) => {
-    setIsLoading(true);
-    try {
-      await ApiService.register(email, username, password);
-      await ApiService.login(username, password);
-      const userData = await ApiService.getCurrentUser();
-      setUser(userData);
-    } finally {
-      setIsLoading(false);
-    }
+  const register = async (data: RegisterRequest) => {
+    await authAPI.register(data);
+    await login(data);
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-      await ApiService.logout();
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refreshUser = async () => {
-    try {
-      const userData = await ApiService.getCurrentUser();
-      setUser(userData);
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
-    }
+    await removeToken();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

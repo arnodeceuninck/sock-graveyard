@@ -1,384 +1,191 @@
-# 🧦 Sock Graveyard
+# Sock Graveyard
 
-> A "Most Wanted" style sock matching application using AI-powered image recognition
+Find your missing socks using AI-powered image matching!
 
-## 📖 Overview
+## Overview
 
-**Sock Graveyard** is an intelligent sock matching application that helps you find pairs of lost socks using advanced computer vision and machine learning. When you can't find a matching pair after doing laundry, simply take a picture of the lonely sock and let our AI find its match!
+Sock Graveyard is a full-stack application that helps you organize and match your lost socks using computer vision. Upload photos of your socks, and the app will automatically find similar matches using deep learning embeddings.
 
-### Key Features
-
-- 📸 **Camera Integration**: Take photos or upload from gallery directly in the app
-- 🎯 **AI-Powered Matching**: Uses OpenAI CLIP embeddings for highly accurate sock matching
-- �️ **Smart Image Processing**: Automatic background removal and sock cropping
-- 🎨 **Feature Extraction**: Analyzes color, pattern, and texture
-- 🔒 **Secure Authentication**: JWT-based auth with bcrypt password hashing
-- 📱 **Cross-Platform**: Works on iOS, Android, and Web (via React Native/Expo)
-- 🎭 **Most Wanted Theme**: Unique wanted poster aesthetic with dark/light mode
-- 🐳 **Docker-Ready**: One command deployment with docker-compose
-- 🔍 **Vector Search**: Powered by PostgreSQL with pgvector extension
-
-> **New!** Full camera and image upload functionality is now available! See [CAMERA_GUIDE.md](CAMERA_GUIDE.md) for details.
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Nginx Reverse Proxy                      │
-│                        (Port 80)                             │
-└────────────────┬────────────────────────────────────────────┘
-                 │
-                 ├─────────────> Static Files
-                 │
-                 ├─────────────> /api/* ──────────┐
-                 │                                  │
-                 └─────────────> /docs, /health    │
-                                                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    FastAPI Backend                           │
-│                      (Port 8000)                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  • Authentication (JWT)                              │  │
-│  │  • Image Upload & Processing                         │  │
-│  │  • CLIP Embedding Generation                         │  │
-│  │  • Feature Extraction (Color, Pattern, Texture)      │  │
-│  │  • Similarity Search                                 │  │
-│  └──────────────────────────────────────────────────────┘  │
-└──┬────────────────────────────────────────┬─────────────────┘
-   │                                        │
-   │                                        │
-   ▼                                        ▼
-┌──────────────────────────┐    ┌──────────────────────────┐
-│  PostgreSQL + pgvector   │    │      Redis Cache         │
-│      (Port 5432)         │    │      (Port 6379)         │
-│                          │    │                          │
-│  • Users                 │    │  • Sessions              │
-│  • Socks                 │    │  • Temp Data             │
-│  • Vector Embeddings     │    └──────────────────────────┘
-└──────────────────────────┘
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Docker & Docker Compose
-- Node.js 18+ (for frontend development)
-- Python 3.11+ (for local backend development)
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/sock-graveyard.git
-cd sock-graveyard
-```
-
-### 2. Set Up Environment Variables
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set a secure `SECRET_KEY`:
-
-```bash
-# Generate a secure key (on Windows PowerShell):
-# [System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-
-# Or use Python:
-# python -c "import secrets; print(secrets.token_hex(32))"
-```
-
-### 3. Start the Application
-
-```bash
-docker-compose up -d
-```
-
-This will start:
-- PostgreSQL with pgvector (port 5432)
-- Redis (port 6379)
-- FastAPI Backend (port 8000)
-- Nginx Reverse Proxy (port 80)
-
-### 4. Verify Installation
-
-```bash
-# Check health endpoint
-curl http://localhost/health
-
-# Access API documentation
-# Open in browser: http://localhost/docs
-```
-
-### 5. Run Database Migrations
-
-Migrations run automatically on container startup, but you can also run manually:
-
-```bash
-docker-compose exec backend alembic upgrade head
-```
-
-## 📱 Frontend Setup (React Native / Expo)
-
-The frontend will be created using Expo for cross-platform support. To set it up locally:
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-This opens Expo DevTools where you can:
-- Run on iOS Simulator
-- Run on Android Emulator  
-- Scan QR code to run on physical device
-- Run in web browser
-
-## 🧪 Testing
-
-### Backend API Tests
-
-```bash
-# Run pytest tests
-docker-compose exec backend pytest tests/test_e2e.py -v
-
-# Run with coverage
-docker-compose exec backend pytest --cov=app tests/
-```
-
-### Matching Algorithm Test Script
-
-Test the CLIP embedding and matching algorithm with sample images:
-
-```bash
-docker-compose exec backend python test_matching.py sock1.jpg sock2.jpg
-```
-
-### Selenium E2E Tests
-
-```bash
-# Install ChromeDriver first, then:
-cd backend
-python tests/test_selenium.py
-```
-
-## 📚 API Documentation
-
-Once the application is running, visit:
-
-- **Swagger UI**: http://localhost/docs
-- **ReDoc**: http://localhost/redoc
-
-### Key Endpoints
-
-#### Authentication
-
-```
-POST /api/auth/register
-POST /api/auth/login
-GET  /api/users/me
-```
-
-#### Sock Operations
-
-```
-POST   /api/socks/              # Upload a sock image
-GET    /api/socks/              # List all socks
-GET    /api/socks/{id}          # Get specific sock
-GET    /api/socks/{id}/image    # Get sock image
-POST   /api/socks/search        # Search for similar socks
-POST   /api/socks/match         # Confirm a match
-DELETE /api/socks/{id}          # Remove from graveyard
-```
-
-### Example Usage
-
-#### 1. Register a User
-
-```bash
-curl -X POST http://localhost/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "username": "sockfinder",
-    "password": "SecurePass123"
-  }'
-```
-
-#### 2. Login
-
-```bash
-curl -X POST http://localhost/api/auth/login \
-  -F "username=sockfinder" \
-  -F "password=SecurePass123"
-```
-
-Response:
-```json
-{
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-  "token_type": "bearer"
-}
-```
-
-#### 3. Upload a Sock
-
-```bash
-curl -X POST http://localhost/api/socks/ \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@mysock.jpg" \
-  -F "description=Blue striped sock"
-```
-
-#### 4. Search for Matches
-
-```bash
-curl -X POST "http://localhost/api/socks/search?sock_id=1&threshold=0.85" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-## 🎨 Most Wanted Theme
-
-The application features a unique "Most Wanted" poster aesthetic:
-
-- **Typography**: Western/wanted poster fonts
-- **Colors**: 
-  - Light mode: Aged paper tones (#F4E4C1, #8B4513)
-  - Dark mode: Noir with aged accents (#1A1A1A, #FFD700)
-- **Design Elements**:
-  - Torn paper edges
-  - Vintage stamps and badges
-  - Wanted poster frames
-  - "REWARD" banners for matches
-
-## 🔧 Development
-
-### Project Structure
+## Project Structure
 
 ```
 sock-graveyard/
-├── backend/
-│   ├── alembic/                 # Database migrations
-│   ├── app/
-│   │   ├── routers/             # API endpoints
-│   │   ├── services/            # Business logic
-│   │   ├── models.py            # SQLAlchemy models
-│   │   ├── schemas.py           # Pydantic schemas
-│   │   ├── auth.py              # Authentication
-│   │   ├── config.py            # Configuration
-│   │   └── main.py              # FastAPI app
-│   ├── tests/                   # Test files
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/                    # React Native Expo app
-│   ├── src/
-│   │   ├── screens/
-│   │   ├── components/
-│   │   ├── navigation/
-│   │   └── services/
-│   ├── package.json
-│   └── app.json
-├── nginx/                       # Nginx configuration
-├── docker-compose.yml
+├── backend/          # FastAPI backend with EfficientNet
+├── frontend/         # React Native Expo Go mobile app
 └── README.md
 ```
 
-### Adding New Features
+## Features
 
-1. **Backend**: Add routes in `backend/app/routers/`
-2. **Database**: Create migrations with `alembic revision --autogenerate -m "description"`
-3. **Frontend**: Add screens in `frontend/src/screens/`
-4. **Tests**: Add tests in `backend/tests/`
+### Backend
+- **FastAPI** REST API (>=0.128.0)
+- **SQLAlchemy** with Alembic for database migrations
+- **PostgreSQL** or SQLite support
+- **JWT Authentication** with bcrypt password hashing
+- **EfficientNet-B0** for image embeddings
+- **Vector Similarity Search** using cosine similarity
 
-### Code Quality
+### Frontend
+- **React Native** with Expo Go
+- **TypeScript** for type safety
+- **React Navigation** for routing
+- **Camera & Gallery** integration
+- **Secure token storage**
+- **Auto-matching** after upload
 
-The project follows:
-- **PEP 8** for Python code
-- **Type hints** throughout Python code
-- **Comprehensive error handling** with proper logging
-- **No code duplication** - DRY principle
-- **Security best practices** - bcrypt hashing, JWT tokens, CORS configuration
+## Quick Start
 
-## 🔒 Security
+### Backend Setup
 
-- **Password Hashing**: Bcrypt with automatic salting
-- **JWT Tokens**: Secure token-based authentication
-- **CORS**: Configurable cross-origin resource sharing
-- **SQL Injection Protection**: SQLAlchemy ORM
-- **File Upload Validation**: Type and size checks
-- **Rate Limiting**: Can be added via middleware (future enhancement)
+```powershell
+cd backend
 
-## 🐛 Troubleshooting
+# Create virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 
-### Container Issues
+# Install dependencies
+pip install -r requirements.txt
 
-```bash
-# View logs
-docker-compose logs -f backend
+# Configure environment
+cp .env.example .env
 
-# Restart services
-docker-compose restart
+# Run migrations
+alembic upgrade head
 
-# Rebuild containers
-docker-compose up -d --build
+# Start server
+uvicorn app.main:app --host 0.0.0.0 --reload
 ```
 
-### Database Issues
+API will be available at `http://localhost:8000`
 
-```bash
-# Connect to PostgreSQL
-docker-compose exec db psql -U sockuser -d sockgraveyard
+### Frontend Setup
 
-# Reset database
-docker-compose down -v
-docker-compose up -d
+```powershell
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure API endpoint (use your computer's IP)
+# Edit .env: API_BASE_URL=http://192.168.1.XXX:8000
+
+# Start Expo
+npm start
 ```
 
-### Python Dependencies
+Scan QR code with Expo Go app to run on your device.
 
-```bash
-# Install new dependency
-docker-compose exec backend pip install package-name
+## How It Works
 
-# Update requirements.txt
-docker-compose exec backend pip freeze > requirements.txt
+1. **Register/Login**: Create an account with username and password
+2. **Upload Sock**: Take a photo or select from gallery
+3. **AI Processing**: Backend generates embedding using EfficientNet-B0
+4. **Smart Matching**: Compares with your collection using cosine similarity
+5. **View Results**: See similarity scores for potential matches
+6. **Manage Collection**: Add to collection if no match found
+
+## Tech Stack
+
+### Backend
+- FastAPI
+- SQLAlchemy + Alembic
+- PostgreSQL / SQLite
+- PyTorch + torchvision (EfficientNet-B0)
+- python-jose (JWT)
+- passlib (bcrypt)
+
+### Frontend
+- React Native
+- Expo
+- TypeScript
+- React Navigation
+- Axios
+- Expo Image Picker
+- Expo Secure Store
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login and get JWT token
+- `GET /auth/me` - Get current user info
+
+### Socks
+- `POST /socks/upload` - Upload sock image
+- `GET /socks/list` - List unmatched socks
+- `GET /socks/{id}` - Get sock details
+- `GET /socks/{id}/image` - Get sock image
+- `POST /socks/search` - Search similar socks
+
+## Documentation
+
+- [Backend Documentation](backend/README.md)
+- [Frontend Documentation](frontend/README.md)
+
+## Development
+
+### Backend Development
+```powershell
+# Run with auto-reload
+uvicorn app.main:app --reload
+
+# Create new migration
+alembic revision --autogenerate -m "description"
+
+# Apply migrations
+alembic upgrade head
 ```
 
-## 📊 Performance Considerations
+### Frontend Development
+```powershell
+# Start development server
+npm start
 
-- **Vector Search**: pgvector provides efficient similarity search
-- **Image Caching**: Redis caches frequently accessed data
-- **Background Processing**: Can add Celery for async tasks (future enhancement)
-- **Connection Pooling**: SQLAlchemy pools database connections
+# Run on specific platform
+npm run ios
+npm run android
+npm run web
+```
 
-## 🤝 Contributing
+## Network Configuration
+
+For Expo Go to connect to your backend:
+
+1. Backend must listen on `0.0.0.0`:
+   ```powershell
+   uvicorn app.main:app --host 0.0.0.0
+   ```
+
+2. Frontend must use your computer's IP:
+   ```
+   API_BASE_URL=http://192.168.1.XXX:8000
+   ```
+
+Find your IP:
+- Windows: `ipconfig`
+- Mac/Linux: `ifconfig`
+
+## Troubleshooting
+
+### Backend Issues
+- Ensure PostgreSQL is running (if not using SQLite)
+- Check database connection string in `.env`
+- Verify PyTorch installation for your system
+
+### Frontend Issues
+- Both devices must be on same network
+- Use computer's IP address, not `localhost`
+- Grant camera/photo permissions in phone settings
+
+## License
+
+MIT License - See LICENSE file for details
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **OpenAI CLIP**: For the powerful image embedding model
-- **pgvector**: For efficient vector similarity search in PostgreSQL
-- **rembg**: For background removal
-- **FastAPI**: For the excellent Python web framework
-- **Expo**: For simplifying cross-platform mobile development
-
-## 📞 Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Check existing documentation
-- Review API docs at `/docs`
-
----
-
-**Happy Sock Matching!** 🧦✨
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request

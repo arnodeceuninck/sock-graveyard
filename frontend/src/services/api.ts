@@ -1,183 +1,145 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../constants/theme';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import { API_BASE_URL } from '../config';
+import { User, Sock, SockMatch, LoginRequest, RegisterRequest, AuthResponse } from '../types';
 
-// API Client
-class ApiService {
-  private client: AxiosInstance;
-  private token: string | null = null;
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
 
-  constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+// Token management
+const TOKEN_KEY = 'auth_token';
 
-    // Request interceptor to add auth token
-    this.client.interceptors.request.use(
-      async (config) => {
-        if (!this.token) {
-          this.token = await AsyncStorage.getItem('auth_token');
-        }
-        if (this.token) {
-          config.headers.Authorization = `Bearer ${this.token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
+// Check if we're on web or native
+const isWeb = Platform.OS === 'web';
 
-    // Response interceptor for error handling
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid
-          await this.logout();
-        }
-        return Promise.reject(error);
-      }
-    );
+export const saveToken = async (token: string) => {
+  if (isWeb) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(TOKEN_KEY, token);
   }
+};
 
-  // Auth methods
-  async register(email: string, username: string, password: string) {
-    const response = await this.client.post('/auth/register', {
-      email,
-      username,
-      password,
-    });
+export const getToken = async () => {
+  if (isWeb) {
+    return localStorage.getItem(TOKEN_KEY);
+  } else {
+    return await SecureStore.getItemAsync(TOKEN_KEY);
+  }
+};
+
+// Synchronous version for web (used in image headers)
+export const getTokenSync = () => {
+  if (isWeb) {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+  // For native, this won't work synchronously, should use async version
+  throw new Error('getTokenSync is only available on web');
+};
+
+export const removeToken = async () => {
+  if (isWeb) {
+    localStorage.removeItem(TOKEN_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+  }
+};
+
+// Add token to requests
+api.interceptors.request.use(async (config) => {
+  const token = await getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth API
+export const authAPI = {
+  register: async (data: RegisterRequest): Promise<User> => {
+    const response = await api.post<User>('/auth/register', data);
     return response.data;
-  }
+  },
 
-  async login(username: string, password: string) {
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
     const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
-
-    const response = await this.client.post('/auth/login', formData, {
+    formData.append('username', data.username);
+    formData.append('password', data.password);
+    
+    const response = await api.post<AuthResponse>('/auth/login', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-
-    const { access_token } = response.data;
-    this.token = access_token;
-    await AsyncStorage.setItem('auth_token', access_token);
-
     return response.data;
-  }
+  },
 
-  async logout() {
-    this.token = null;
-    await AsyncStorage.removeItem('auth_token');
-  }
-
-  async getCurrentUser() {
-    const response = await this.client.get('/users/me');
+  me: async (): Promise<User> => {
+    const response = await api.get<User>('/auth/me');
     return response.data;
-  }
+  },
+};
 
-  // Sock methods
-  async uploadSock(imageUri: string, description?: string) {
+// Socks API
+export const socksAPI = {
+  upload: async (uri: string): Promise<Sock> => {
     const formData = new FormData();
     
-    // Handle file upload differently for web vs native
-    if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
-      // Web: fetch the blob first
-      const response = await fetch(imageUri);
+    if (isWeb) {
+      // For web, fetch the blob from the URI and create a File object
+      const response = await fetch(uri);
       const blob = await response.blob();
-      // @ts-ignore - File constructor works in web environment
-      const file = new File([blob], 'sock.jpg', { type: blob.type || 'image/jpeg' });
-      formData.append('file', file);
-    } else if (imageUri.startsWith('file://')) {
-      // Mobile: Use the file URI directly
-      // @ts-ignore - React Native handles file upload differently
+      formData.append('file', blob, 'sock.jpg');
+    } else {
+      // For React Native
       formData.append('file', {
-        uri: imageUri,
+        uri,
         type: 'image/jpeg',
         name: 'sock.jpg',
       } as any);
+    }
+
+    const response = await api.post<Sock>('/socks/upload', formData);
+    return response.data;
+  },
+
+  list: async (): Promise<Sock[]> => {
+    const response = await api.get<Sock[]>('/socks/list');
+    return response.data;
+  },
+
+  get: async (sockId: number): Promise<Sock> => {
+    const response = await api.get<Sock>(`/socks/${sockId}`);
+    return response.data;
+  },
+
+  getImageUrl: (sockId: number): string => {
+    const token = getTokenSync();
+    return `${API_BASE_URL}/socks/${sockId}/image?token=${encodeURIComponent(token || '')}`;
+  },
+
+  search: async (uri: string): Promise<SockMatch[]> => {
+    const formData = new FormData();
+    
+    if (isWeb) {
+      // For web, fetch the blob from the URI and create a File object
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'sock.jpg');
     } else {
-      // Web (blob URI): Try to fetch as blob
-      try {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        // @ts-ignore - File constructor works in web environment
-        const file = new File([blob], 'sock.jpg', { type: blob.type || 'image/jpeg' });
-        formData.append('file', file);
-      } catch (error) {
-        // Fallback for React Native
-        // @ts-ignore
-        formData.append('file', {
-          uri: imageUri,
-          type: 'image/jpeg',
-          name: 'sock.jpg',
-        } as any);
-      }
+      // For React Native
+      formData.append('file', {
+        uri,
+        type: 'image/jpeg',
+        name: 'sock.jpg',
+      } as any);
     }
 
-    if (description) {
-      formData.append('description', description);
-    }
-
-    const response = await this.client.post('/socks/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
+    const response = await api.post<SockMatch[]>('/socks/search', formData);
     return response.data;
-  }
+  },
+};
 
-  async getSocks(unmatchedOnly: boolean = false) {
-    const response = await this.client.get('/socks/', {
-      params: { unmatched_only: unmatchedOnly },
-    });
-    return response.data;
-  }
-
-  async getSock(sockId: number) {
-    const response = await this.client.get(`/socks/${sockId}`);
-    return response.data;
-  }
-
-  async getSockImage(sockId: number, processed: boolean = false) {
-    const response = await this.client.get(`/socks/${sockId}/image`, {
-      params: { processed },
-      responseType: 'blob',
-    });
-    return response.data;
-  }
-
-  async searchSimilarSocks(sockId: number, threshold: number = 0.85, limit: number = 10) {
-    const response = await this.client.post('/socks/search', null, {
-      params: { sock_id: sockId, threshold, limit },
-    });
-    return response.data;
-  }
-
-  async confirmMatch(sockId1: number, sockId2: number) {
-    const response = await this.client.post('/socks/match', {
-      sock_id_1: sockId1,
-      sock_id_2: sockId2,
-    });
-    return response.data;
-  }
-
-  async deleteSock(sockId: number) {
-    const response = await this.client.delete(`/socks/${sockId}`);
-    return response.data;
-  }
-
-  // Helper to check if user is authenticated
-  async isAuthenticated(): Promise<boolean> {
-    const token = await AsyncStorage.getItem('auth_token');
-    return !!token;
-  }
-}
-
-export default new ApiService();
+export default api;

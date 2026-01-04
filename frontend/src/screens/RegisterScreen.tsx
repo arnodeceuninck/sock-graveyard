@@ -3,29 +3,24 @@ import {
   View,
   Text,
   TextInput,
+  TouchableOpacity,
   StyleSheet,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { Button } from '../components/Button';
-import { Spacing, Typography, BorderRadius } from '../constants/theme';
 
 export default function RegisterScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  
+  const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
-  const { colors } = useTheme();
 
   const handleRegister = async () => {
-    if (!email || !username || !password || !confirmPassword) {
+    if (!username.trim() || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -35,124 +30,77 @@ export default function RegisterScreen({ navigation }: any) {
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      await register(email, username, password);
+      await register({ username: username.trim(), password });
     } catch (error: any) {
-      Alert.alert(
-        'Registration Failed',
-        error.response?.data?.detail || 'Could not create account'
-      );
+      const message = error.response?.data?.detail || 'Registration failed';
+      Alert.alert('Registration Failed', message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.wanted, { color: colors.wanted }]}>JOIN THE HUNT</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Create Your Account
-          </Text>
-        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join Sock Graveyard</Text>
 
-        {/* Form */}
-        <View style={[styles.form, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.label, { color: colors.text }]}>Email</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="your@email.com"
-            placeholderTextColor={colors.textSecondary}
-          />
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
-          <Text style={[styles.label, { color: colors.text }]}>Username</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            placeholder="Choose a username"
-            placeholderTextColor={colors.textSecondary}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
-          <Text style={[styles.label, { color: colors.text }]}>Password</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="At least 8 characters"
-            placeholderTextColor={colors.textSecondary}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
-          <Text style={[styles.label, { color: colors.text }]}>
-            Confirm Password
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            placeholder="Re-enter password"
-            placeholderTextColor={colors.textSecondary}
-          />
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Creating Account...' : 'Register'}
+              </Text>
+            </TouchableOpacity>
 
-          <Button
-            title="Create Account"
-            onPress={handleRegister}
-            loading={loading}
-            style={styles.button}
-          />
-
-          <Button
-            title="Back to Login"
-            onPress={() => navigation.goBack()}
-            variant="outline"
-            style={styles.button}
-          />
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.linkText}>Already have an account? Login</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -162,43 +110,62 @@ export default function RegisterScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    padding: Spacing.lg,
+    padding: 20,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  wanted: {
-    fontSize: Typography.fontSize.poster,
+  title: {
+    fontSize: 32,
     fontWeight: 'bold',
-    letterSpacing: 6,
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#333',
   },
   subtitle: {
-    fontSize: Typography.fontSize.md,
-    marginTop: Spacing.sm,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 40,
+    color: '#666',
   },
   form: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 3,
-  },
-  label: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: '600',
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
+    width: '100%',
   },
   input: {
-    borderWidth: 2,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    fontSize: Typography.fontSize.md,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   button: {
-    marginTop: Spacing.lg,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  linkButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#007AFF',
+    fontSize: 14,
   },
 });
