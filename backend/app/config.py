@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
     
+    # CORS
+    cors_origins: list[str] = ["https://socks.arnodece.com", "http://localhost", "http://localhost:19006"]
+    
     # Storage
     upload_dir: str = "./uploads"
     

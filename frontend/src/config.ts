@@ -1,2 +1,3 @@
 // API is always accessed via /api path (nginx routes this to backend)
-export const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost/api';
+// Using relative path so it works on any domain (localhost, socks.arnodece.com, etc.)
+export const API_BASE_URL = '/api';
