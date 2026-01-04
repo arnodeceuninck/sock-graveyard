@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { socksAPI, getTokenSync } from '../services/api';
 import { SockMatch } from '../types';
+import SimilarSocksList from '../components/SimilarSocksList';
 
 export default function UploadScreen({ navigation }: any) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -173,41 +174,11 @@ export default function UploadScreen({ navigation }: any) {
 
         {showResults && (
           <View style={styles.resultsContainer}>
-            <Text style={styles.resultsTitle}>
-              {similarSocks.length > 0 ? 'Similar Socks Found' : 'No Similar Socks Found'}
-            </Text>
-
-            {similarSocks.length > 0 ? (
-              <>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.matchList}>
-                  {similarSocks.map((match) => (
-                    <TouchableOpacity
-                      key={match.sock_id}
-                      style={styles.matchCard}
-                      onPress={() => viewSockDetail(match.sock_id)}
-                    >
-                      <Image
-                        source={{
-                          uri: socksAPI.getImageUrl(match.sock_id),
-                        }}
-                        style={styles.matchImage}
-                      />
-                      <Text style={styles.matchSimilarity}>
-                        {(match.similarity * 100).toFixed(0)}% match
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-
-                <Text style={styles.noMatchText}>
-                  Don't see a match? Add this sock to your collection.
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.noMatchText}>
-                This sock doesn't match any in your collection. Add it now!
-              </Text>
-            )}
+            <SimilarSocksList
+              matches={similarSocks}
+              onSockPress={viewSockDetail}
+              showNoMatchMessage={true}
+            />
 
             <TouchableOpacity style={styles.addButton} onPress={addToCollection}>
               <Text style={styles.addButtonText}>Add to Collection</Text>
@@ -300,46 +271,12 @@ const styles = StyleSheet.create({
   resultsContainer: {
     marginTop: 20,
   },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  matchList: {
-    marginBottom: 20,
-  },
-  matchCard: {
-    marginRight: 15,
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  matchImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  matchSimilarity: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  noMatchText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
   addButton: {
     backgroundColor: '#34C759',
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
+    marginTop: 10,
   },
   addButtonText: {
     color: 'white',

@@ -9,13 +9,17 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { socksAPI, getTokenSync } from '../services/api';
-import { Sock } from '../types';
+import { socksAPI } from '../services/api';
+import { Sock, SockMatch } from '../types';
+import SimilarSocksList from '../components/SimilarSocksList';
 
 export default function SockDetailScreen({ route, navigation }: any) {
   const { sockId } = route.params;
   const [sock, setSock] = useState<Sock | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [similarSocks, setSimilarSocks] = useState<SockMatch[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     loadSock();
@@ -49,6 +53,45 @@ export default function SockDetailScreen({ route, navigation }: any) {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const findSimilarSocks = async () => {
+    if (!sock) return;
+
+    setIsSearching(true);
+    try {
+      // We need to fetch the image and search with it
+      const imageUrl = socksAPI.getImageUrl(sock.id);
+      
+      // For web, fetch the image as a blob
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create a temporary file-like object with the blob
+      const file = new File([blob], 'sock.jpg', { type: 'image/jpeg' });
+      
+      // Create FormData and search
+      const formData = new FormData();
+      formData.append('file', blob, 'sock.jpg');
+      
+      const matches = await socksAPI.search(imageUrl);
+      
+      // Filter out the current sock from results
+      const filteredMatches = matches.filter(match => match.sock_id !== sock.id);
+      setSimilarSocks(filteredMatches);
+      setShowResults(true);
+    } catch (error: any) {
+      Alert.alert('Search Failed', error.response?.data?.detail || 'Failed to search for similar socks');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const viewSockDetail = (sockId: number) => {
+    // Reset the search results when navigating
+    setSimilarSocks([]);
+    setShowResults(false);
+    navigation.push('SockDetail', { sockId });
   };
 
   if (isLoading) {
@@ -115,12 +158,30 @@ export default function SockDetailScreen({ route, navigation }: any) {
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('Upload')}
+            style={[styles.actionButton, isSearching && styles.buttonDisabled]}
+            onPress={findSimilarSocks}
+            disabled={isSearching}
           >
-            <Text style={styles.actionButtonText}>Find Similar Socks</Text>
+            <Text style={styles.actionButtonText}>
+              {isSearching ? 'Searching...' : 'Find Similar Socks'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {isSearching && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.searchingText}>Searching for matches...</Text>
+          </View>
+        )}
+
+        {showResults && !isSearching && (
+          <SimilarSocksList
+            matches={similarSocks}
+            onSockPress={viewSockDetail}
+            showNoMatchMessage={false}
+          />
+        )}
       </View>
     </ScrollView>
   );
@@ -220,9 +281,20 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   actionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  searchingText: {
+    marginTop: 10,
+    color: '#666',
   },
 });
