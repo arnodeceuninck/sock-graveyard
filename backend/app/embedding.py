@@ -40,22 +40,30 @@ class EmbeddingService:
         Returns:
             bytes: The embedding as bytes
         """
-        # Load and preprocess image
-        image = Image.open(image_file).convert('RGB')
-        image_tensor = self.transform(image).unsqueeze(0).to(self.device)
-        
-        # Generate embedding
-        with torch.no_grad():
-            embedding = self.model(image_tensor)
+        try:
+            # Load and preprocess image
+            image = Image.open(image_file).convert('RGB')
+            image_tensor = self.transform(image).unsqueeze(0)
             
-        # Flatten and convert to numpy
-        embedding = embedding.squeeze().cpu().numpy()
-        
-        # Normalize the embedding
-        embedding = embedding / np.linalg.norm(embedding)
-        
-        # Convert to bytes for storage
-        return embedding.tobytes()
+            # Always use CPU for inference to avoid device issues
+            # This is more reliable across different environments
+            image_tensor = image_tensor.cpu()
+            
+            # Generate embedding
+            with torch.no_grad():
+                embedding = self.model.cpu()(image_tensor)
+                
+            # Flatten and convert to numpy
+            embedding = embedding.squeeze().numpy()
+            
+            # Normalize the embedding
+            embedding = embedding / np.linalg.norm(embedding)
+            
+            # Convert to bytes for storage
+            return embedding.tobytes()
+        except Exception as e:
+            print(f"Error in create_embedding: {type(e).__name__}: {str(e)}")
+            raise
     
     @staticmethod
     def embedding_from_bytes(embedding_bytes: bytes) -> np.ndarray:

@@ -12,7 +12,18 @@ const getDevApiUrl = () => {
     
     return apiUrl;
   }
-  // For web (development and production), use relative path through nginx
+  
+  // For web, check if we're in development or production
+  // In development: frontend is on port 8081, backend is on port 8000
+  // In production: nginx routes /api to backend
+  if (typeof window !== 'undefined') {
+    // Development: frontend runs on port 8081, need to hit backend directly on 8000
+    if (window.location.port === '8081' || process.env.NODE_ENV === 'development') {
+      return 'http://localhost:8000';
+    }
+  }
+  
+  // Production web: use relative path through nginx (strips /api prefix)
   return '/api';
 };
 

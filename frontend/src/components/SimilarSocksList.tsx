@@ -110,7 +110,7 @@ export default function SimilarSocksList({
         <FlatList
           data={matches}
           renderItem={renderMatchItem}
-          keyExtractor={(item) => item.sock_id.toString()}
+          keyExtractor={(item, index) => item?.sock_id?.toString() || index.toString()}
           key={numColumns}
           numColumns={numColumns}
           contentContainerStyle={styles.matchList}
