@@ -27,6 +27,13 @@ export default function SockDetailScreen({ route, navigation }: any) {
     loadSock();
   }, [sockId]);
 
+  useEffect(() => {
+    // Automatically search for similar socks once sock is loaded
+    if (sock && !isSearching && !showResults) {
+      findSimilarSocks();
+    }
+  }, [sock]);
+
   const loadSock = async () => {
     try {
       // Get auth token for image URLs
