@@ -156,7 +156,15 @@ def get_sock_image(
             detail="Image file not found"
         )
     
-    return FileResponse(sock.image_path)
+    # Return file with CORS headers for web compatibility
+    return FileResponse(
+        sock.image_path,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 
 @router.post("/search", response_model=List[SockMatch])

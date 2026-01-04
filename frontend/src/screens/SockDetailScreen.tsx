@@ -156,17 +156,19 @@ export default function SockDetailScreen({ route, navigation }: any) {
           </View>
         </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, isSearching && styles.buttonDisabled]}
-            onPress={findSimilarSocks}
-            disabled={isSearching}
-          >
-            <Text style={styles.actionButtonText}>
-              {isSearching ? 'Searching...' : 'Find Similar Socks'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {!showResults && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.actionButton, isSearching && styles.buttonDisabled]}
+              onPress={findSimilarSocks}
+              disabled={isSearching}
+            >
+              <Text style={styles.actionButtonText}>
+                {isSearching ? 'Searching...' : 'Find Similar Socks'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {isSearching && (
           <View style={styles.loadingContainer}>
