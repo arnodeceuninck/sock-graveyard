@@ -43,3 +43,20 @@ class SockMatch(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class MatchCreate(BaseModel):
+    sock1_id: int
+    sock2_id: int
+
+
+class MatchResponse(BaseModel):
+    id: int
+    sock1_id: int
+    sock2_id: int
+    matched_at: datetime
+    sock1: SockResponse
+    sock2: SockResponse
+    
+    class Config:
+        from_attributes = True

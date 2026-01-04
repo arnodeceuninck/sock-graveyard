@@ -31,3 +31,17 @@ export interface AuthResponse {
   access_token: string;
   token_type: string;
 }
+
+export interface MatchCreate {
+  sock1_id: number;
+  sock2_id: number;
+}
+
+export interface Match {
+  id: number;
+  sock1_id: number;
+  sock2_id: number;
+  matched_at: string;
+  sock1: Sock;
+  sock2: Sock;
+}

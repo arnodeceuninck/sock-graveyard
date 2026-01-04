@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config';
-import { User, Sock, SockMatch, LoginRequest, RegisterRequest, AuthResponse } from '../types';
+import { User, Sock, SockMatch, LoginRequest, RegisterRequest, AuthResponse, MatchCreate, Match } from '../types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -142,6 +142,24 @@ export const socksAPI = {
       : '/socks/search';
     
     const response = await api.post<SockMatch[]>(url, formData);
+    return response.data;
+  },
+};
+
+// Matches API
+export const matchesAPI = {
+  create: async (data: MatchCreate): Promise<Match> => {
+    const response = await api.post<Match>('/socks/match', data);
+    return response.data;
+  },
+
+  list: async (): Promise<Match[]> => {
+    const response = await api.get<Match[]>('/socks/matches');
+    return response.data;
+  },
+
+  get: async (matchId: number): Promise<Match> => {
+    const response = await api.get<Match>(`/socks/matches/${matchId}`);
     return response.data;
   },
 };

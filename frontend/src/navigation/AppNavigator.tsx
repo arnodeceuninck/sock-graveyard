@@ -11,6 +11,8 @@ import RegisterScreen from '../screens/RegisterScreen';
 import UploadScreen from '../screens/UploadScreen';
 import SocksScreen from '../screens/SocksScreen';
 import SockDetailScreen from '../screens/SockDetailScreen';
+import MatchesScreen from '../screens/MatchesScreen';
+import MatchDetailScreen from '../screens/MatchDetailScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -61,6 +63,22 @@ function MainTabs() {
           ),
         }}
       />
+      <Tab.Screen
+        name="Matches"
+        component={MatchesScreen}
+        options={{
+          tabBarLabel: 'Matches',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>💕</Text>,
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={logout}
+              style={{ marginRight: 15 }}
+            >
+              <Text style={{ color: '#007AFF', fontSize: 16 }}>Logout</Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -91,6 +109,17 @@ function MainStack() {
         component={SockDetailScreen}
         options={{
           title: 'Sock Details',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerTintColor: '#007AFF',
+        }}
+      />
+      <Stack.Screen
+        name="MatchDetail"
+        component={MatchDetailScreen}
+        options={{
+          title: 'Match Details',
           headerStyle: {
             backgroundColor: '#fff',
           },

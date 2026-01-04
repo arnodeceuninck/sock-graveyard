@@ -180,6 +180,13 @@ export default function SockDetailScreen({ route, navigation }: any) {
             matches={similarSocks}
             onSockPress={viewSockDetail}
             showNoMatchMessage={false}
+            sourceSockId={sock.id}
+            onMatchCreated={() => {
+              // Reload sock data and clear results
+              loadSock();
+              setSimilarSocks([]);
+              setShowResults(false);
+            }}
           />
         )}
       </View>
