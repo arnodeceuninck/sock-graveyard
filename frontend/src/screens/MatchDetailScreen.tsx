@@ -6,12 +6,13 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Platform,
   TouchableOpacity,
 } from 'react-native';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 export default function MatchDetailScreen({ route, navigation }: any) {
   const { matchId } = route.params;
@@ -97,8 +98,12 @@ export default function MatchDetailScreen({ route, navigation }: any) {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading match details...</Text>
+        <Image
+          source={require('../../assets/matches.png')}
+          style={styles.loadingIcon}
+        />
+        <ActivityIndicator size="large" color={theme.colors.ghostWhite} />
+        <Text style={styles.loadingText}>Summoning soul mates...</Text>
       </View>
     );
   }
@@ -114,12 +119,16 @@ export default function MatchDetailScreen({ route, navigation }: any) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Match #{match.id}</Text>
-        <Text style={styles.matchIcon}>💕</Text>
+        <Image
+          source={require('../../assets/matches.png')}
+          style={styles.headerIcon}
+        />
+        <Text style={styles.title}>Soul Mates #{match.id}</Text>
+        <Text style={styles.subtitle}>Forever United</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Matched Socks</Text>
+        <Text style={styles.sectionTitle}>{SOCK_EMOJIS.pair} Reunited Souls</Text>
         
         <View style={styles.socksContainer}>
           <View style={styles.sockContainer}>
@@ -127,9 +136,9 @@ export default function MatchDetailScreen({ route, navigation }: any) {
               source={{ uri: socksAPI.getImageUrl(match.sock1.id, authToken) }}
               style={styles.sockImage}
             />
-            <Text style={styles.sockLabel}>Sock #{match.sock1.id}</Text>
+            <Text style={styles.sockLabel}>Soul #{match.sock1.id}</Text>
             <Text style={styles.sockDate}>
-              Added {formatDate(match.sock1.created_at)}
+              Entered {formatDate(match.sock1.created_at)}
             </Text>
           </View>
 
@@ -138,40 +147,40 @@ export default function MatchDetailScreen({ route, navigation }: any) {
               source={{ uri: socksAPI.getImageUrl(match.sock2.id, authToken) }}
               style={styles.sockImage}
             />
-            <Text style={styles.sockLabel}>Sock #{match.sock2.id}</Text>
+            <Text style={styles.sockLabel}>Soul #{match.sock2.id}</Text>
             <Text style={styles.sockDate}>
-              Added {formatDate(match.sock2.created_at)}
+              Entered {formatDate(match.sock2.created_at)}
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Match Details</Text>
+        <Text style={styles.sectionTitle}>{SOCK_EMOJIS.sparkle} Reunion Record</Text>
         
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Match Date:</Text>
+          <Text style={styles.detailLabel}>United:</Text>
           <Text style={styles.detailValue}>{formatDate(match.matched_at)}</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Match Time:</Text>
+          <Text style={styles.detailLabel}>Time of Reunion:</Text>
           <Text style={styles.detailValue}>{formatTime(match.matched_at)}</Text>
         </View>
       </View>
 
       <View style={styles.actionsSection}>
-        <Text style={styles.sectionTitle}>Actions</Text>
+        <Text style={styles.sectionTitle}>⚠️ Actions</Text>
         
         <TouchableOpacity
           style={styles.decoupleButton}
           onPress={() => handleDelete(true)}
         >
           <Text style={styles.decoupleButtonText}>
-            Decouple Match
+            🔗 Separate Souls
           </Text>
           <Text style={styles.buttonSubtext}>
-            Break match and return socks to singles
+            Return both to wandering
           </Text>
         </TouchableOpacity>
 
@@ -180,10 +189,10 @@ export default function MatchDetailScreen({ route, navigation }: any) {
           onPress={() => handleDelete(false)}
         >
           <Text style={styles.deleteButtonText}>
-            Delete Match & Both Socks
+            ☠️ Release Forever
           </Text>
           <Text style={styles.buttonSubtext}>
-            Permanently delete everything
+            Permanently remove both souls
           </Text>
         </TouchableOpacity>
       </View>
@@ -194,49 +203,65 @@ export default function MatchDetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
+  },
+  loadingIcon: {
+    width: 72,
+    height: 72,
+    marginBottom: theme.spacing.md,
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.md,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textMuted,
   },
   header: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    padding: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.ghostWhite,
+  },
+  headerIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: theme.spacing.md,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    ...theme.typography.h1,
+    color: theme.colors.ghostWhite,
+    marginBottom: theme.spacing.xs,
+    textShadowColor: 'rgba(240, 240, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
-  matchIcon: {
-    fontSize: 48,
+  subtitle: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
   },
   section: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    margin: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    margin: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    ...theme.typography.h3,
+    color: theme.colors.ghostWhite,
+    marginBottom: theme.spacing.md,
   },
   socksContainer: {
     flexDirection: 'row',
@@ -245,79 +270,84 @@ const styles = StyleSheet.create({
   sockContainer: {
     alignItems: 'center',
     flex: 1,
-    margin: 5,
+    margin: theme.spacing.xs,
   },
   sockImage: {
     width: 150,
     height: 150,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    marginBottom: 10,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surfaceLight,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 2,
+    borderColor: theme.colors.tombstone,
   },
   sockLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
   },
   sockDate: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.tombstone,
   },
   detailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textMuted,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: theme.colors.text,
     fontWeight: '500',
     textAlign: 'right',
     flex: 1,
-    marginLeft: 10,
+    marginLeft: theme.spacing.sm,
   },
   actionsSection: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    margin: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    margin: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
   },
   decoupleButton: {
-    backgroundColor: '#FF9500',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.warning,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.medium,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.danger,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
+    ...theme.shadows.medium,
   },
   decoupleButtonText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   deleteButtonText: {
-    color: 'white',
+    color: theme.colors.ghostWhite,
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   buttonSubtext: {
-    color: 'white',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 12,
-    opacity: 0.9,
   },
 });

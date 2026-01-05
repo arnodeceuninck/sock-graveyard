@@ -8,10 +8,11 @@ import {
   FlatList,
   useWindowDimensions,
   Modal,
-  Alert,
 } from 'react-native';
 import { socksAPI, matchesAPI } from '../services/api';
 import { SockMatch } from '../types';
+import { theme, SOCK_EMOJIS, GHOST_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 interface SimilarSocksListProps {
   matches: SockMatch[];
@@ -100,7 +101,7 @@ export default function SimilarSocksList({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
-        {matches.length > 0 ? 'Similar Socks Found' : 'No Similar Socks Found'}
+        {matches.length > 0 ? 'Soul Mates Found' : 'No Soul Mates Found'}
       </Text>
 
       {matches.length > 0 ? (
@@ -151,7 +152,7 @@ export default function SimilarSocksList({
                 disabled={isCreatingMatch}
               >
                 <Text style={styles.confirmButtonText}>
-                  {isCreatingMatch ? 'Matching...' : 'Confirm'}
+                  {isCreatingMatch ? 'Uniting...' : 'Reunite'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -164,97 +165,112 @@ export default function SimilarSocksList({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  titleEmoji: {
+    fontSize: 28,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    ...theme.typography.h3,
+    color: theme.colors.accent,
   },
   matchList: {
-    padding: 10,
+    padding: theme.spacing.sm,
   },
   columnWrapper: {
     justifyContent: 'space-evenly',
   },
   matchCard: {
-    margin: 10,
+    margin: theme.spacing.sm,
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.tombstone,
+    ...theme.shadows.medium,
   },
   matchImage: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#f0f0f0',
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.surfaceLight,
   },
   matchSimilarity: {
     fontSize: 12,
-    color: '#007AFF',
+    color: theme.colors.accent,
     fontWeight: '600',
   },
   noMatchText: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: theme.spacing.md,
+    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xl,
     width: '80%',
     maxWidth: 400,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    ...theme.shadows.large,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    ...theme.typography.h2,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
   modalMessage: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.lg,
     lineHeight: 22,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: theme.spacing.sm,
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
-    marginHorizontal: 5,
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.colors.tombstone,
   },
   cancelButtonText: {
-    color: '#333',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
   confirmButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.medium,
   },
   confirmButtonText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },

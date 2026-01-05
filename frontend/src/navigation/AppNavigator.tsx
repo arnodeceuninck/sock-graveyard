@@ -2,8 +2,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity, Text, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -23,11 +24,17 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        headerStyle: {
-          backgroundColor: '#fff',
+        tabBarActiveTintColor: theme.colors.accent,
+        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.tombstone,
+          borderTopWidth: 1,
         },
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+        },
+        headerTintColor: theme.colors.primary,
         headerShadowVisible: true,
       }}
     >
@@ -36,13 +43,22 @@ function MainTabs() {
         component={UploadScreen}
         options={{
           tabBarLabel: 'Upload',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>📤</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Image
+              source={require('../../assets/upload.png')}
+              style={{
+                width: 28,
+                height: 28,
+                opacity: focused ? 1 : 0.6,
+              }}
+            />
+          ),
           headerRight: () => (
             <TouchableOpacity
               onPress={logout}
               style={{ marginRight: 15 }}
             >
-              <Text style={{ color: '#007AFF', fontSize: 16 }}>Logout</Text>
+              <Text style={{ color: theme.colors.danger, fontSize: 16 }}>Logout</Text>
             </TouchableOpacity>
           ),
         }}
@@ -52,13 +68,22 @@ function MainTabs() {
         component={SocksScreen}
         options={{
           tabBarLabel: 'Singles',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>🧦</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Image
+              source={require('../../assets/single.png')}
+              style={{
+                width: 28,
+                height: 28,
+                opacity: focused ? 1 : 0.6,
+              }}
+            />
+          ),
           headerRight: () => (
             <TouchableOpacity
               onPress={logout}
               style={{ marginRight: 15 }}
             >
-              <Text style={{ color: '#007AFF', fontSize: 16 }}>Logout</Text>
+              <Text style={{ color: theme.colors.danger, fontSize: 16 }}>Logout</Text>
             </TouchableOpacity>
           ),
         }}
@@ -67,14 +92,23 @@ function MainTabs() {
         name="Matches"
         component={MatchesScreen}
         options={{
-          tabBarLabel: 'Matches',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 24 }}>💕</Text>,
+          tabBarLabel: 'Reunions',
+          tabBarIcon: ({ color, focused }) => (
+            <Image
+              source={require('../../assets/matches.png')}
+              style={{
+                width: 28,
+                height: 28,
+                opacity: focused ? 1 : 0.6,
+              }}
+            />
+          ),
           headerRight: () => (
             <TouchableOpacity
               onPress={logout}
               style={{ marginRight: 15 }}
             >
-              <Text style={{ color: '#007AFF', fontSize: 16 }}>Logout</Text>
+              <Text style={{ color: theme.colors.danger, fontSize: 16 }}>Logout</Text>
             </TouchableOpacity>
           ),
         }}
@@ -108,22 +142,22 @@ function MainStack() {
         name="SockDetail"
         component={SockDetailScreen}
         options={{
-          title: 'Sock Details',
+          title: 'Soul Details',
           headerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: theme.colors.surface,
           },
-          headerTintColor: '#007AFF',
+          headerTintColor: theme.colors.primary,
         }}
       />
       <Stack.Screen
         name="MatchDetail"
         component={MatchDetailScreen}
         options={{
-          title: 'Match Details',
+          title: 'Soul Mates',
           headerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: theme.colors.surface,
           },
-          headerTintColor: '#007AFF',
+          headerTintColor: theme.colors.heartGlow,
         }}
       />
     </Stack.Navigator>

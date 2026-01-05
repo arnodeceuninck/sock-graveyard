@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
-  Alert,
   Platform,
 } from 'react-native';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 export default function MatchesScreen({ navigation }: any) {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -70,15 +71,20 @@ export default function MatchesScreen({ navigation }: any) {
           source={{ uri: socksAPI.getImageUrl(item.sock1_id, authToken) }}
           style={styles.sockImage}
         />
-        <Text style={styles.matchIcon}>💕</Text>
+        <View style={styles.heartContainer}>
+          <Image
+            source={require('../../assets/matches.png')}
+            style={styles.matchIconImage}
+          />
+        </View>
         <Image
           source={{ uri: socksAPI.getImageUrl(item.sock2_id, authToken) }}
           style={styles.sockImage}
         />
       </View>
       <View style={styles.matchInfo}>
-        <Text style={styles.matchTitle}>Match #{item.id}</Text>
-        <Text style={styles.matchDate}>Matched on {formatDate(item.matched_at)}</Text>
+        <Text style={styles.matchTitle}>Soul Mates #{item.id}</Text>
+        <Text style={styles.matchDate}>United {formatDate(item.matched_at)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -86,8 +92,12 @@ export default function MatchesScreen({ navigation }: any) {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading matches...</Text>
+        <Image
+          source={require('../../assets/matches.png')}
+          style={styles.loadingIcon}
+        />
+        <ActivityIndicator size="large" color={theme.colors.ghostWhite} />
+        <Text style={styles.loadingText}>Seeking soul mates...</Text>
       </View>
     );
   }
@@ -95,10 +105,10 @@ export default function MatchesScreen({ navigation }: any) {
   if (matches.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>🧦</Text>
-        <Text style={styles.emptyTitle}>No Matches Yet</Text>
+        <Text style={styles.emptyIcon}>{GHOST_EMOJIS.lonely}</Text>
+        <Text style={styles.emptyTitle}>No Reunions Yet</Text>
         <Text style={styles.emptyText}>
-          Find similar socks and mark them as matches to see them here!
+          When lost souls find their match, they'll rest here in eternal peace.
         </Text>
       </View>
     );
@@ -119,73 +129,92 @@ export default function MatchesScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.lg,
+  },
+  loadingIcon: {
+    width: 72,
+    height: 72,
+    marginBottom: theme.spacing.md,
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.md,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: 20,
+    fontSize: 96,
+    marginBottom: theme.spacing.lg,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    ...theme.typography.h2,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+    fontStyle: 'italic',
   },
   listContent: {
-    padding: 15,
+    padding: theme.spacing.md,
   },
   matchCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.ghostWhite,
+    ...theme.shadows.large,
+    shadowColor: theme.colors.ghostWhite,
   },
   matchImages: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginBottom: theme.spacing.md,
   },
   sockImage: {
     width: 120,
     height: 120,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surfaceLight,
+    borderWidth: 2,
+    borderColor: theme.colors.tombstone,
   },
-  matchIcon: {
-    fontSize: 32,
-    marginHorizontal: 15,
+  heartContainer: {
+    marginHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  matchIconImage: {
+    width: 40,
+    height: 40,
   },
   matchInfo: {
     alignItems: 'center',
   },
   matchTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
+    ...theme.typography.h3,
+    color: theme.colors.ghostWhite,
+    marginBottom: theme.spacing.xs,
+    textShadowColor: 'rgba(240, 240, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   matchDate: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
   },
 });

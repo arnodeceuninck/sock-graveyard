@@ -5,12 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { theme, SOCK_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 export default function LoginScreen({ navigation }: any) {
   const [username, setUsername] = useState('');
@@ -41,8 +43,13 @@ export default function LoginScreen({ navigation }: any) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
+          <Image
+            source={require('../../assets/banner.png')}
+            style={styles.banner}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Sock Graveyard</Text>
-          <Text style={styles.subtitle}>Login to find your socks</Text>
+          <Text style={styles.subtitle}>Login to prevent your lost socks from dying alone</Text>
 
           <View style={styles.form}>
             <TextInput
@@ -89,7 +96,7 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -97,54 +104,64 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: theme.spacing.lg,
+  },
+  banner: {
+    width: '100%',
+    height: 120,
+    marginBottom: theme.spacing.lg,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...theme.typography.h1,
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.primary,
+    textShadowColor: theme.colors.ghostGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 40,
-    color: '#666',
+    marginBottom: theme.spacing.xxl,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
   },
   form: {
     width: '100%',
   },
   input: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.tombstone,
+    color: theme.colors.text,
   },
   button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.medium,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.button,
+    color: theme.colors.textInverse,
   },
   linkButton: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
     alignItems: 'center',
   },
   linkText: {
-    color: '#007AFF',
+    color: theme.colors.accent,
     fontSize: 14,
   },
 });

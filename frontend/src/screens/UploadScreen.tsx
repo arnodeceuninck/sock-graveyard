@@ -5,7 +5,6 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
   ActivityIndicator,
   Platform,
@@ -14,6 +13,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 export default function UploadScreen({ navigation }: any) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -178,16 +179,30 @@ export default function UploadScreen({ navigation }: any) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Upload Sock</Text>
-        <Text style={styles.subtitle}>Take a photo or select from gallery</Text>
+        <View style={styles.titleContainer}>
+          <Image
+            source={require('../../assets/upload.png')}
+            style={styles.titleIcon}
+          />
+          <Text style={styles.title}>Upload Socks</Text>
+        </View>
+        <Text style={styles.subtitle}>Photograph the departed and give them peace</Text>
 
         <View style={styles.buttonGroup}>
           <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-            <Text style={styles.actionButtonText}>📷 Take Photo</Text>
+            <Image
+              source={require('../../assets/upload-from-camera.png')}
+              style={styles.actionButtonIcon}
+            />
+            <Text style={styles.actionButtonText}>Take Photo</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-            <Text style={styles.actionButtonText}>🖼️ Choose from Gallery</Text>
+            <Image
+              source={require('../../assets/upload-from-gallery.png')}
+              style={styles.actionButtonIcon}
+            />
+            <Text style={styles.actionButtonText}>From Gallery</Text>
           </TouchableOpacity>
         </View>
 
@@ -197,14 +212,18 @@ export default function UploadScreen({ navigation }: any) {
             
             {isUploading && (
               <View style={styles.uploadingOverlay}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.uploadingText}>Uploading...</Text>
+                <Image
+                  source={require('../../assets/upload.png')}
+                  style={styles.uploadingIcon}
+                />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.uploadingText}>Entering the graveyard...</Text>
               </View>
             )}
             
             {uploadedSockId && !isUploading && (
               <View style={styles.uploadedBadge}>
-                <Text style={styles.uploadedText}>✓ Uploaded</Text>
+                <Text style={styles.uploadedText}>✓ Laid to Rest</Text>
               </View>
             )}
           </View>
@@ -225,8 +244,12 @@ export default function UploadScreen({ navigation }: any) {
 
         {isSearching && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Searching for matches...</Text>
+            <Image
+              source={require('../../assets/single.png')}
+              style={styles.loadingIcon}
+            />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>Seeking reunions...</Text>
           </View>
         )}
       </View>
@@ -237,101 +260,138 @@ export default function UploadScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 20,
+    padding: theme.spacing.lg,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  titleIcon: {
+    width: 36,
+    height: 36,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
+    ...theme.typography.h1,
+    color: theme.colors.primary,
+    textShadowColor: theme.colors.ghostGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   buttonGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   actionButton: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    flex: 0.48,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    flex: 1,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.tombstone,
+    ...theme.shadows.medium,
+  },
+  actionButtonIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: theme.spacing.sm,
   },
   actionButtonText: {
     fontSize: 14,
-    color: '#333',
+    color: theme.colors.text,
+    fontWeight: '600',
   },
   imageContainer: {
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
     position: 'relative',
   },
   image: {
     width: '100%',
     maxWidth: 400,
     aspectRatio: 1,
-    borderRadius: 8,
-    marginBottom: 15,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
     alignSelf: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.tombstone,
   },
   uploadingOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 8,
+    bottom: theme.spacing.md,
+    backgroundColor: theme.colors.overlay,
+    borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  uploadingIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: theme.spacing.sm,
+  },
   uploadingText: {
-    color: 'white',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '600',
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
   },
   uploadedBadge: {
-    backgroundColor: '#34C759',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.success,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
+    ...theme.shadows.glow,
   },
   uploadedText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
   resultsContainer: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
   },
   addButton: {
-    backgroundColor: '#34C759',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.success,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.glow,
   },
   addButtonText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
+  },
+  loadingIcon: {
+    width: 56,
+    height: 56,
+    marginBottom: theme.spacing.md,
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.sm,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
 });

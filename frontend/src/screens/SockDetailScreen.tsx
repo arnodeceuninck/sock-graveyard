@@ -7,12 +7,13 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock, SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
+import { Alert } from '../utils/alert';
 
 export default function SockDetailScreen({ route, navigation }: any) {
   const { sockId } = route.params;
@@ -130,8 +131,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading sock details...</Text>
+        <Text style={styles.loadingEmoji}>{GHOST_EMOJIS.search}</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Summoning from the graveyard...</Text>
       </View>
     );
   }
@@ -155,24 +157,27 @@ export default function SockDetailScreen({ route, navigation }: any) {
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Sock #{sock.id}</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleEmoji}>{SOCK_EMOJIS.ghost}</Text>
+            <Text style={styles.title}>Soul #{sock.id}</Text>
+          </View>
           <View style={[styles.badge, sock.is_matched ? styles.matchedBadge : styles.unmatchedBadge]}>
             <Text style={styles.badgeText}>
-              {sock.is_matched ? '✓ Matched' : '⏳ Unmatched'}
+              {sock.is_matched ? '✓ Reunited' : '⏳ Wandering'}
             </Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Details</Text>
+          <Text style={styles.sectionTitle}>{SOCK_EMOJIS.rip} Eternal Record</Text>
           
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Date Added:</Text>
+            <Text style={styles.detailLabel}>Entered Graveyard:</Text>
             <Text style={styles.detailValue}>{formatDate(sock.created_at)}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Time Added:</Text>
+            <Text style={styles.detailLabel}>Time of Arrival:</Text>
             <Text style={styles.detailValue}>{formatTime(sock.created_at)}</Text>
           </View>
 
@@ -196,8 +201,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
               onPress={findSimilarSocks}
               disabled={isSearching}
             >
+              <Text style={styles.actionButtonEmoji}>{GHOST_EMOJIS.search}</Text>
               <Text style={styles.actionButtonText}>
-                {isSearching ? 'Searching...' : 'Find Similar Socks'}
+                {isSearching ? 'Searching...' : 'Seek Reunion'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -205,8 +211,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
 
         {isSearching && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.searchingText}>Searching for matches...</Text>
+            <Text style={styles.searchingEmoji}>{GHOST_EMOJIS.search}</Text>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.searchingText}>Seeking lost souls...</Text>
           </View>
         )}
 
@@ -231,8 +238,9 @@ export default function SockDetailScreen({ route, navigation }: any) {
               onPress={handleDelete}
               disabled={isSearching}
             >
+              <Text style={styles.deleteButtonEmoji}>☠️</Text>
               <Text style={styles.deleteButtonText}>
-                Delete Sock
+                Release from Graveyard
               </Text>
             </TouchableOpacity>
           </View>
@@ -245,128 +253,165 @@ export default function SockDetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
+  },
+  loadingEmoji: {
+    fontSize: 72,
+    marginBottom: theme.spacing.md,
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.md,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: theme.colors.textMuted,
   },
   image: {
     width: '100%',
     maxWidth: 500,
     aspectRatio: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.colors.surfaceLight,
     alignSelf: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.tombstone,
   },
   content: {
-    padding: 20,
+    padding: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  titleEmoji: {
+    fontSize: 32,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
+    ...theme.typography.h2,
+    color: theme.colors.primary,
+    textShadowColor: theme.colors.ghostGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.round,
   },
   matchedBadge: {
-    backgroundColor: '#34C759',
+    backgroundColor: theme.colors.success,
   },
   unmatchedBadge: {
-    backgroundColor: '#FF9500',
+    backgroundColor: theme.colors.warning,
   },
   badgeText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 12,
     fontWeight: '600',
   },
   section: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
+    ...theme.typography.h3,
+    color: theme.colors.accent,
+    marginBottom: theme.spacing.md,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.tombstone,
   },
   detailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textMuted,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: theme.colors.text,
     fontWeight: '500',
     textAlign: 'right',
     flex: 1,
-    marginLeft: 10,
+    marginLeft: theme.spacing.sm,
   },
   actions: {
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
   },
   deleteSection: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
   },
   actionButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    ...theme.shadows.medium,
+  },
+  actionButtonEmoji: {
+    fontSize: 24,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: theme.colors.danger,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    ...theme.shadows.medium,
+  },
+  deleteButtonEmoji: {
+    fontSize: 24,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   actionButtonText: {
-    color: 'white',
+    color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
   deleteButtonText: {
-    color: 'white',
+    color: theme.colors.ghostWhite,
     fontSize: 16,
     fontWeight: '600',
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
+  },
+  searchingEmoji: {
+    fontSize: 56,
+    marginBottom: theme.spacing.md,
   },
   searchingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.sm,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
 });

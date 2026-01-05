@@ -14,6 +14,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock } from '../types';
+import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
 
 export default function SocksScreen({ navigation }: any) {
   const [socks, setSocks] = useState<Sock[]>([]);
@@ -97,8 +98,9 @@ export default function SocksScreen({ navigation }: any) {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading your socks...</Text>
+        <Text style={styles.loadingEmoji}>{GHOST_EMOJIS.search}</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Searching the graveyard...</Text>
       </View>
     );
   }
@@ -106,22 +108,31 @@ export default function SocksScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Unmatched Socks</Text>
-        <Text style={styles.count}>{socks.length} sock{socks.length !== 1 ? 's' : ''}</Text>
+        <View style={styles.headerTop}>
+          <Image
+            source={require('../../assets/single.png')}
+            style={styles.headerIcon}
+          />
+          <Text style={styles.title}>Singles</Text>
+        </View>
+        <Text style={styles.count}>
+          {socks.length} lonely sock{socks.length !== 1 ? 's' : ''} seeking their soul mate
+        </Text>
       </View>
 
       {socks.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>🧦</Text>
-          <Text style={styles.emptyTitle}>No unmatched socks yet</Text>
+          <Text style={styles.emptyEmoji}>{SOCK_EMOJIS.ghost}</Text>
+          <Text style={styles.emptyTitle}>The graveyard is empty...</Text>
           <Text style={styles.emptySubtitle}>
-            Upload your first sock to get started!
+            No lost souls yet. Lay your first sock to rest.
           </Text>
           <TouchableOpacity
             style={styles.uploadButton}
             onPress={() => navigation.navigate('Upload')}
           >
-            <Text style={styles.uploadButtonText}>Upload Sock</Text>
+            <Text style={styles.uploadButtonEmoji}>{SOCK_EMOJIS.rip}</Text>
+            <Text style={styles.uploadButtonText}>Bury a Sock</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -145,97 +156,123 @@ export default function SocksScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
+  },
+  loadingEmoji: {
+    fontSize: 72,
+    marginBottom: theme.spacing.md,
   },
   loadingText: {
-    marginTop: 10,
-    color: '#666',
+    marginTop: theme.spacing.md,
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
   header: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.tombstone,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    ...theme.typography.h2,
+    color: theme.colors.primary,
+    textShadowColor: theme.colors.ghostGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   count: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 5,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
   },
   list: {
-    padding: 10,
+    padding: theme.spacing.sm,
   },
   columnWrapper: {
     justifyContent: 'space-evenly',
   },
   sockCard: {
-    margin: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
+    margin: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.tombstone,
+    ...theme.shadows.medium,
   },
   sockImage: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.colors.surfaceLight,
   },
   sockInfo: {
-    padding: 10,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
   },
   sockId: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.accent,
   },
   sockDate: {
     fontSize: 12,
-    color: '#666',
+    color: theme.colors.textMuted,
     marginTop: 2,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: theme.spacing.xxl,
   },
-  emptyText: {
-    fontSize: 64,
-    marginBottom: 20,
+  emptyEmoji: {
+    fontSize: 96,
+    marginBottom: theme.spacing.lg,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    ...theme.typography.h2,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: theme.spacing.xl,
+    fontStyle: 'italic',
   },
   uploadButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    ...theme.shadows.large,
+  },
+  uploadButtonEmoji: {
+    fontSize: 24,
   },
   uploadButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.button,
+    color: theme.colors.textInverse,
   },
 });
