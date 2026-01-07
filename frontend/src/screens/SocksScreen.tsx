@@ -98,7 +98,10 @@ export default function SocksScreen({ navigation }: any) {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.loadingEmoji}>{GHOST_EMOJIS.search}</Text>
+        <Image
+          source={require('../../assets/singles.png')}
+          style={styles.loadingImage}
+        />
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Searching the graveyard...</Text>
       </View>
@@ -166,6 +169,11 @@ const styles = StyleSheet.create({
   },
   loadingEmoji: {
     fontSize: 72,
+    marginBottom: theme.spacing.md,
+  },
+  loadingImage: {
+    width: 120,
+    height: 120,
     marginBottom: theme.spacing.md,
   },
   loadingText: {
