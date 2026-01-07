@@ -18,6 +18,8 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
 
@@ -34,6 +36,11 @@ export default function RegisterScreen({ navigation }: any) {
 
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    if (!agreedToTerms || !agreedToPrivacy) {
+      Alert.alert('Error', 'Please agree to the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -94,6 +101,46 @@ export default function RegisterScreen({ navigation }: any) {
               secureTextEntry
               autoCapitalize="none"
             />
+
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+              >
+                <View style={[styles.checkboxBox, agreedToTerms && styles.checkboxChecked]}>
+                  {agreedToTerms && <Text style={styles.checkboxMark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I agree to the{' '}
+                  <Text
+                    style={styles.linkTextInline}
+                    onPress={() => navigation.navigate('Terms')}
+                  >
+                    Terms of Service
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+              >
+                <View style={[styles.checkboxBox, agreedToPrivacy && styles.checkboxChecked]}>
+                  {agreedToPrivacy && <Text style={styles.checkboxMark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I agree to the{' '}
+                  <Text
+                    style={styles.linkTextInline}
+                    onPress={() => navigation.navigate('PrivacyPolicy')}
+                  >
+                    Privacy Policy
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -188,5 +235,41 @@ const styles = StyleSheet.create({
   linkText: {
     color: theme.colors.accent,
     fontSize: 14,
+  },
+  checkboxContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.colors.tombstone,
+    backgroundColor: theme.colors.surface,
+    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  checkboxMark: {
+    color: theme.colors.textInverse,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxText: {
+    color: theme.colors.text,
+    fontSize: 14,
+    flex: 1,
+  },
+  linkTextInline: {
+    color: theme.colors.accent,
+    textDecorationLine: 'underline',
   },
 });

@@ -89,6 +89,16 @@ export default function LoginScreen({ navigation }: any) {
             >
               <Text style={styles.linkText}>Don't have an account? Register</Text>
             </TouchableOpacity>
+
+            <View style={styles.legalLinks}>
+              <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
+                <Text style={styles.legalLinkText}>Terms of Service</Text>
+              </TouchableOpacity>
+              <Text style={styles.legalSeparator}> • </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+                <Text style={styles.legalLinkText}>Privacy Policy</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -166,5 +176,19 @@ const styles = StyleSheet.create({
   linkText: {
     color: theme.colors.accent,
     fontSize: 14,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: theme.spacing.lg,
+  },
+  legalLinkText: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+  },
+  legalSeparator: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
   },
 });

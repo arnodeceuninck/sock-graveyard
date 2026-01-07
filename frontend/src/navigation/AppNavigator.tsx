@@ -14,6 +14,8 @@ import SocksScreen from '../screens/SocksScreen';
 import SockDetailScreen from '../screens/SockDetailScreen';
 import MatchesScreen from '../screens/MatchesScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
+import TermsScreen from '../screens/TermsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -126,6 +128,30 @@ function AuthStack() {
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen 
+        name="Terms" 
+        component={TermsScreen}
+        options={{
+          headerShown: true,
+          title: 'Terms of Service',
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerTintColor: theme.colors.primary,
+        }}
+      />
+      <Stack.Screen 
+        name="PrivacyPolicy" 
+        component={PrivacyPolicyScreen}
+        options={{
+          headerShown: true,
+          title: 'Privacy Policy',
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerTintColor: theme.colors.primary,
+        }}
+      />
     </Stack.Navigator>
   );
 }
