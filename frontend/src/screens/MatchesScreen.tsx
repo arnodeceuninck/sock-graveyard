@@ -105,7 +105,10 @@ export default function MatchesScreen({ navigation }: any) {
   if (matches.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>{GHOST_EMOJIS.lonely}</Text>
+        <Image
+          source={require('../../assets/sad.png')}
+          style={styles.emptyImage}
+        />
         <Text style={styles.emptyTitle}>No Reunions Yet</Text>
         <Text style={styles.emptyText}>
           When lost souls find their match, they'll rest here in eternal peace.
@@ -150,6 +153,11 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 96,
+    marginBottom: theme.spacing.lg,
+  },
+  emptyImage: {
+    width: 150,
+    height: 150,
     marginBottom: theme.spacing.lg,
   },
   emptyTitle: {

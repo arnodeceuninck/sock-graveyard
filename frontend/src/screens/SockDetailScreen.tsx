@@ -169,7 +169,20 @@ export default function SockDetailScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{SOCK_EMOJIS.rip} Eternal Record</Text>
+          <Text style={styles.sectionTitle}>Eternal Record</Text>
+
+          <View style={styles.gravestoneContainer}>
+            <Image 
+              source={require('../../assets/empty-gravestone.png')} 
+              style={styles.gravestoneImage}
+              resizeMode="contain"
+            />
+            <Image 
+              source={{ uri: socksAPI.getImageNoBgUrl(sock.id, authToken) }} 
+              style={styles.sockOnGravestone}
+              resizeMode="contain"
+            />
+          </View>
           
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Entered Graveyard:</Text>
@@ -331,10 +344,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.tombstone,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  tombstoneIcon: {
+    width: 32,
+    height: 32,
+  },
   sectionTitle: {
     ...theme.typography.h3,
     color: theme.colors.accent,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  gravestoneContainer: {
+    width: '50%',
+    maxWidth: 250,
+    aspectRatio: 1,
+    alignSelf: 'center',
+    marginBottom: theme.spacing.sm,
+    marginTop: -theme.spacing.sm,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gravestoneImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  sockOnGravestone: {
+    width: '50%',
+    height: '50%',
+    marginTop: '0%',
   },
   detailRow: {
     flexDirection: 'row',

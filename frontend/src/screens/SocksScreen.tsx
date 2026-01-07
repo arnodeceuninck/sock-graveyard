@@ -125,7 +125,10 @@ export default function SocksScreen({ navigation }: any) {
 
       {socks.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>{SOCK_EMOJIS.ghost}</Text>
+          <Image
+            source={require('../../assets/empty-gravestone.png')}
+            style={styles.emptyImage}
+          />
           <Text style={styles.emptyTitle}>The graveyard is empty...</Text>
           <Text style={styles.emptySubtitle}>
             No lost souls yet. Lay your first sock to rest.
@@ -134,8 +137,7 @@ export default function SocksScreen({ navigation }: any) {
             style={styles.uploadButton}
             onPress={() => navigation.navigate('Upload')}
           >
-            <Text style={styles.uploadButtonEmoji}>{SOCK_EMOJIS.rip}</Text>
-            <Text style={styles.uploadButtonText}>Bury a Sock</Text>
+            <Text style={styles.uploadButtonText}>Upload Lonely Socks</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -251,6 +253,11 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: {
     fontSize: 96,
+    marginBottom: theme.spacing.lg,
+  },
+  emptyImage: {
+    width: 150,
+    height: 150,
     marginBottom: theme.spacing.lg,
   },
   emptyTitle: {

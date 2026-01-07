@@ -205,7 +205,7 @@ export default function UploadScreen({ navigation }: any) {
           />
           <Text style={styles.title}>Upload Socks</Text>
         </View>
-        <Text style={styles.subtitle}>Photograph the departed and give them peace</Text>
+        <Text style={styles.subtitle}>Photograph your single socks and give them peace</Text>
 
         <View style={styles.buttonGroup}>
           <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
