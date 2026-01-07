@@ -67,6 +67,7 @@ export default function RegisterScreen({ navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Username"
+              placeholderTextColor={theme.colors.textMuted}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -76,6 +77,7 @@ export default function RegisterScreen({ navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Password"
+              placeholderTextColor={theme.colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -85,6 +87,7 @@ export default function RegisterScreen({ navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Confirm Password"
+              placeholderTextColor={theme.colors.textMuted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
