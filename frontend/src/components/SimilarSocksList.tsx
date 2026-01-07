@@ -76,6 +76,12 @@ export default function SimilarSocksList({
     }
   };
 
+  const handleViewDetails = () => {
+    if (!selectedSockId) return;
+    setShowMatchModal(false);
+    onSockPress(selectedSockId);
+  };
+
   const renderMatchItem = ({ item }: { item: SockMatch }) => {
     // Calculate card width to fit columns with proper spacing
     const cardWidth = (width - 40) / numColumns - 20; // Subtract padding and margins
@@ -160,6 +166,14 @@ export default function SimilarSocksList({
                 </Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              style={styles.viewDetailsButton}
+              onPress={handleViewDetails}
+              disabled={isCreatingMatch}
+            >
+              <Text style={styles.viewDetailsButtonText}>View Sock Details</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -277,5 +291,21 @@ const styles = StyleSheet.create({
     color: theme.colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
+  },
+  viewDetailsButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.md,
+    width: '100%',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  viewDetailsButtonText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
