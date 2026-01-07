@@ -6,7 +6,7 @@ export interface User {
 
 export interface Sock {
   id: number;
-  owner_id: number;
+  user_sequence_id: number;
   image_path: string;
   is_matched: boolean;
   created_at: string;
@@ -39,6 +39,7 @@ export interface MatchCreate {
 
 export interface Match {
   id: number;
+  user_sequence_id: number;
   sock1_id: number;
   sock2_id: number;
   matched_at: string;

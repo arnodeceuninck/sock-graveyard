@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from PIL import Image
 from rembg import remove
 from app.database import get_db
@@ -86,9 +87,16 @@ async def upload_sock(
             detail=f"Failed to create embedding: {str(e)}"
         )
     
+    # Get the next sequence ID for this user
+    max_sequence = db.query(func.max(Sock.user_sequence_id)).filter(
+        Sock.owner_id == current_user.id
+    ).scalar()
+    next_sequence_id = (max_sequence or 0) + 1
+    
     # Create sock record
     new_sock = Sock(
         owner_id=current_user.id,
+        user_sequence_id=next_sequence_id,
         image_path=file_path,
         image_no_bg_path=file_path_no_bg,
         embedding=embedding_bytes

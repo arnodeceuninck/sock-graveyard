@@ -91,7 +91,7 @@ export default function MatchesScreen({ navigation }: any) {
         />
       </View>
       <View style={styles.matchInfo}>
-        <Text style={styles.matchTitle}>Soul Mates #{item.id}</Text>
+        <Text style={styles.matchTitle}>Soul Mates #{item.user_sequence_id}</Text>
         <Text style={styles.matchDate}>United {formatDate(item.matched_at)}</Text>
       </View>
     </TouchableOpacity>

@@ -163,7 +163,7 @@ export default function SockDetailScreen({ route, navigation }: any) {
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Text style={styles.titleEmoji}>{SOCK_EMOJIS.ghost}</Text>
-            <Text style={styles.title}>Soul #{sock.id}</Text>
+            <Text style={styles.title}>Soul #{sock.user_sequence_id}</Text>
           </View>
           <View style={[styles.badge, sock.is_matched ? styles.matchedBadge : styles.unmatchedBadge]}>
             <Text style={styles.badgeText}>
@@ -197,11 +197,6 @@ export default function SockDetailScreen({ route, navigation }: any) {
             <Text style={styles.detailValue}>
               {sock.is_matched ? 'Matched' : 'Unmatched'}
             </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Owner ID:</Text>
-            <Text style={styles.detailValue}>{sock.owner_id}</Text>
           </View>
         </View>
 

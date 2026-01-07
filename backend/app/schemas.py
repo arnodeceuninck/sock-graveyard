@@ -28,7 +28,7 @@ class TokenData(BaseModel):
 
 class SockResponse(BaseModel):
     id: int
-    owner_id: int
+    user_sequence_id: int
     image_path: str
     is_matched: bool
     created_at: datetime
@@ -52,6 +52,7 @@ class MatchCreate(BaseModel):
 
 class MatchResponse(BaseModel):
     id: int
+    user_sequence_id: int
     sock1_id: int
     sock2_id: int
     matched_at: datetime

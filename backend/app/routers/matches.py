@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.models import User, Sock, Match
 from app.schemas import MatchCreate, MatchResponse
@@ -28,19 +29,20 @@ def get_matches(
         if m.sock1 and m.sock2 and m.sock1.owner_id == current_user.id and m.sock2.owner_id == current_user.id:
             user_matches.append({
                 "id": m.id,
+                "user_sequence_id": m.user_sequence_id,
                 "sock1_id": m.sock1_id,
                 "sock2_id": m.sock2_id,
                 "matched_at": m.matched_at.isoformat(),
                 "sock1": {
                     "id": m.sock1.id,
-                    "owner_id": m.sock1.owner_id,
+                    "user_sequence_id": m.sock1.user_sequence_id,
                     "image_path": m.sock1.image_path,
                     "is_matched": m.sock1.is_matched,
                     "created_at": m.sock1.created_at.isoformat()
                 },
                 "sock2": {
                     "id": m.sock2.id,
-                    "owner_id": m.sock2.owner_id,
+                    "user_sequence_id": m.sock2.user_sequence_id,
                     "image_path": m.sock2.image_path,
                     "is_matched": m.sock2.is_matched,
                     "created_at": m.sock2.created_at.isoformat()
@@ -112,8 +114,16 @@ def create_match(
             detail="Cannot match a sock with itself"
         )
     
+    # Get the next sequence ID for this user's matches
+    max_sequence = db.query(func.max(Match.user_sequence_id)).filter(
+        Match.user_id == current_user.id
+    ).scalar()
+    next_sequence_id = (max_sequence or 0) + 1
+    
     # Create the match
     new_match = Match(
+        user_id=current_user.id,
+        user_sequence_id=next_sequence_id,
         sock1_id=match_data.sock1_id,
         sock2_id=match_data.sock2_id
     )

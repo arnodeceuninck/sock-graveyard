@@ -127,7 +127,7 @@ export default function MatchDetailScreen({ route, navigation }: any) {
           cachePolicy="memory-disk"
           contentFit="contain"
         />
-        <Text style={styles.title}>Soul Mates #{match.id}</Text>
+        <Text style={styles.title}>Soul Mates #{match.user_sequence_id}</Text>
         <Text style={styles.subtitle}>Forever United</Text>
       </View>
 
@@ -144,7 +144,7 @@ export default function MatchDetailScreen({ route, navigation }: any) {
               transition={200}
               priority="high"
             />
-            <Text style={styles.sockLabel}>Soul #{match.sock1.id}</Text>
+            <Text style={styles.sockLabel}>Soul #{match.sock1.user_sequence_id}</Text>
             <Text style={styles.sockDate}>
               Entered {formatDate(match.sock1.created_at)}
             </Text>
@@ -159,7 +159,7 @@ export default function MatchDetailScreen({ route, navigation }: any) {
               transition={200}
               priority="high"
             />
-            <Text style={styles.sockLabel}>Soul #{match.sock2.id}</Text>
+            <Text style={styles.sockLabel}>Soul #{match.sock2.user_sequence_id}</Text>
             <Text style={styles.sockDate}>
               Entered {formatDate(match.sock2.created_at)}
             </Text>

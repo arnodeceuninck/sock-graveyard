@@ -92,7 +92,7 @@ export default function SocksScreen({ navigation }: any) {
           placeholder={require('../../assets/icon.png')}
         />
         <View style={styles.sockInfo}>
-          <Text style={styles.sockId}>Sock #{item.id}</Text>
+          <Text style={styles.sockId}>Sock #{item.user_sequence_id}</Text>
           <Text style={styles.sockDate}>Added {formatDate(item.created_at)}</Text>
         </View>
       </TouchableOpacity>
