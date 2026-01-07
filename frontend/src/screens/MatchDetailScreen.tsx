@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
 import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
@@ -101,6 +101,8 @@ export default function MatchDetailScreen({ route, navigation }: any) {
         <Image
           source={require('../../assets/matches.png')}
           style={styles.loadingIcon}
+          cachePolicy="memory-disk"
+          contentFit="contain"
         />
         <ActivityIndicator size="large" color={theme.colors.ghostWhite} />
         <Text style={styles.loadingText}>Summoning soul mates...</Text>
@@ -122,6 +124,8 @@ export default function MatchDetailScreen({ route, navigation }: any) {
         <Image
           source={require('../../assets/matches.png')}
           style={styles.headerIcon}
+          cachePolicy="memory-disk"
+          contentFit="contain"
         />
         <Text style={styles.title}>Soul Mates #{match.id}</Text>
         <Text style={styles.subtitle}>Forever United</Text>
@@ -135,6 +139,10 @@ export default function MatchDetailScreen({ route, navigation }: any) {
             <Image
               source={{ uri: socksAPI.getImageUrl(match.sock1.id, authToken) }}
               style={styles.sockImage}
+              cachePolicy="memory-disk"
+              contentFit="cover"
+              transition={200}
+              priority="high"
             />
             <Text style={styles.sockLabel}>Soul #{match.sock1.id}</Text>
             <Text style={styles.sockDate}>
@@ -146,6 +154,10 @@ export default function MatchDetailScreen({ route, navigation }: any) {
             <Image
               source={{ uri: socksAPI.getImageUrl(match.sock2.id, authToken) }}
               style={styles.sockImage}
+              cachePolicy="memory-disk"
+              contentFit="cover"
+              transition={200}
+              priority="high"
             />
             <Text style={styles.sockLabel}>Soul #{match.sock2.id}</Text>
             <Text style={styles.sockDate}>

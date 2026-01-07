@@ -1,8 +1,10 @@
 import os
 import uuid
+import hashlib
+from io import BytesIO
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from PIL import Image
 from rembg import remove
@@ -143,6 +145,8 @@ def get_sock_image(
     sock_id: int,
     token: Optional[str] = Query(None),
     authorization: Optional[str] = Header(None),
+    thumbnail: bool = Query(False, description="Return a thumbnail version (max 600px)"),
+    quality: int = Query(85, ge=50, le=100, description="JPEG quality (50-100)"),
     db: Session = Depends(get_db)
 ):
     """Get the image file for a specific sock. Supports token via query param for web or Authorization header."""
@@ -186,10 +190,54 @@ def get_sock_image(
             detail="Image file not found"
         )
     
-    # Return file with CORS headers for web compatibility
+    # Generate ETag based on file modification time and parameters
+    file_mtime = os.path.getmtime(sock.image_path)
+    etag_base = f"{sock_id}-{file_mtime}-{thumbnail}-{quality}"
+    etag = hashlib.md5(etag_base.encode()).hexdigest()
+    
+    # If thumbnail or quality adjustment requested, process image
+    if thumbnail or quality < 100:
+        try:
+            with Image.open(sock.image_path) as img:
+                # Convert to RGB if needed (for JPEG compatibility)
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    rgb_img.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                    img = rgb_img
+                
+                # Resize for thumbnail
+                if thumbnail:
+                    img.thumbnail((600, 600), Image.Resampling.LANCZOS)
+                
+                # Save to bytes with quality setting
+                output = BytesIO()
+                img.save(output, format='JPEG', quality=quality, optimize=True)
+                output.seek(0)
+                
+                return Response(
+                    content=output.read(),
+                    media_type="image/jpeg",
+                    headers={
+                        "Cache-Control": "public, max-age=86400, immutable",  # Cache for 1 day
+                        "ETag": etag,
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "GET",
+                        "Access-Control-Allow-Headers": "*",
+                    }
+                )
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            # Fall back to original file
+            pass
+    
+    # Return original file with cache headers
     return FileResponse(
         sock.image_path,
         headers={
+            "Cache-Control": "public, max-age=86400, immutable",  # Cache for 1 day
+            "ETag": etag,
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET",
             "Access-Control-Allow-Headers": "*",
@@ -245,10 +293,16 @@ def get_sock_image_no_bg(
             detail="Background-removed image file not found"
         )
     
-    # Return file with CORS headers for web compatibility
+    # Generate ETag based on file modification time
+    file_mtime = os.path.getmtime(sock.image_no_bg_path)
+    etag = hashlib.md5(f"{sock_id}-{file_mtime}".encode()).hexdigest()
+    
+    # Return file with cache headers and CORS headers for web compatibility
     return FileResponse(
         sock.image_no_bg_path,
         headers={
+            "Cache-Control": "public, max-age=86400, immutable",  # Cache for 1 day
+            "ETag": etag,
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET",
             "Access-Control-Allow-Headers": "*",

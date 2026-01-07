@@ -6,9 +6,9 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
 import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
@@ -34,7 +34,7 @@ export default function MatchesScreen({ navigation }: any) {
       if (Platform.OS === 'web') {
         try {
           const token = getTokenSync();
-          setAuthToken(token);
+          setAuthToken(token || '');
         } catch (e) {
           console.warn('[MatchesScreen] Could not get token on web');
         }
@@ -68,18 +68,26 @@ export default function MatchesScreen({ navigation }: any) {
     >
       <View style={styles.matchImages}>
         <Image
-          source={{ uri: socksAPI.getImageUrl(item.sock1_id, authToken) }}
+          source={{ uri: socksAPI.getImageUrl(item.sock1_id, authToken, true) }}
           style={styles.sockImage}
+          cachePolicy="memory-disk"
+          contentFit="cover"
+          transition={200}
         />
         <View style={styles.heartContainer}>
           <Image
             source={require('../../assets/matches.png')}
             style={styles.matchIconImage}
+            cachePolicy="memory-disk"
+            contentFit="contain"
           />
         </View>
         <Image
-          source={{ uri: socksAPI.getImageUrl(item.sock2_id, authToken) }}
+          source={{ uri: socksAPI.getImageUrl(item.sock2_id, authToken, true) }}
           style={styles.sockImage}
+          cachePolicy="memory-disk"
+          contentFit="cover"
+          transition={200}
         />
       </View>
       <View style={styles.matchInfo}>

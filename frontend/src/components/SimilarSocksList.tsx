@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   FlatList,
   useWindowDimensions,
   Modal,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { socksAPI, matchesAPI } from '../services/api';
 import { SockMatch } from '../types';
 import { theme, SOCK_EMOJIS, GHOST_EMOJIS } from '../theme';
@@ -87,9 +87,13 @@ export default function SimilarSocksList({
       >
         <Image
           source={{
-            uri: socksAPI.getImageUrl(item.sock_id, authToken),
+            uri: socksAPI.getImageUrl(item.sock_id, authToken, true),
           }}
           style={styles.matchImage}
+          cachePolicy="memory-disk"
+          contentFit="cover"
+          transition={150}
+          placeholder={require('../../assets/icon.png')}
         />
         <Text style={styles.matchSimilarity}>
           {(item.similarity * 100).toFixed(0)}% match

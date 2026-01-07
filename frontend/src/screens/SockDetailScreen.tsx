@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock, SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
@@ -153,6 +153,10 @@ export default function SockDetailScreen({ route, navigation }: any) {
           uri: socksAPI.getImageUrl(sock.id, authToken),
         }}
         style={styles.image}
+        cachePolicy="memory-disk"
+        contentFit="cover"
+        transition={300}
+        priority="high"
       />
 
       <View style={styles.content}>
@@ -175,12 +179,15 @@ export default function SockDetailScreen({ route, navigation }: any) {
             <Image 
               source={require('../../assets/empty-gravestone.png')} 
               style={styles.gravestoneImage}
-              resizeMode="contain"
+              contentFit="contain"
+              cachePolicy="memory-disk"
             />
             <Image 
               source={{ uri: socksAPI.getImageNoBgUrl(sock.id, authToken) }} 
               style={styles.sockOnGravestone}
-              resizeMode="contain"
+              contentFit="contain"
+              cachePolicy="memory-disk"
+              transition={200}
             />
           </View>
           

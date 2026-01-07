@@ -3,7 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock } from '../types';
@@ -33,7 +33,7 @@ export default function SocksScreen({ navigation }: any) {
       if (Platform.OS === 'web') {
         try {
           const token = getTokenSync();
-          setAuthToken(token);
+          setAuthToken(token || '');
         } catch (e) {
           console.warn('[SocksScreen] Could not get token on web');
         }
@@ -83,9 +83,13 @@ export default function SocksScreen({ navigation }: any) {
       >
         <Image
           source={{
-            uri: socksAPI.getImageUrl(item.id, authToken),
+            uri: socksAPI.getImageUrl(item.id, authToken, true),
           }}
           style={styles.sockImage}
+          cachePolicy="memory-disk"
+          contentFit="cover"
+          transition={200}
+          placeholder={require('../../assets/icon.png')}
         />
         <View style={styles.sockInfo}>
           <Text style={styles.sockId}>Sock #{item.id}</Text>

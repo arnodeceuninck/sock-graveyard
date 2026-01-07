@@ -173,7 +173,8 @@ export const socksAPI = {
 
   // Get image URL with authentication token
   // Pass token explicitly (from AsyncStorage on mobile, from localStorage on web)
-  getImageUrl: (sockId: number, token?: string): string => {
+  // useThumbnail: if true, requests a smaller, optimized version for list views
+  getImageUrl: (sockId: number, token?: string, useThumbnail: boolean = false): string => {
     // Both web and mobile need token in URL because:
     // - Web: <img> tags can't send custom headers
     // - Mobile: React Native Image component doesn't send custom headers
@@ -186,12 +187,16 @@ export const socksAPI = {
       }
     }
     
+    const params = new URLSearchParams();
     if (token) {
-      return `${API_BASE_URL}/singles/${sockId}/image?token=${encodeURIComponent(token)}`;
+      params.append('token', token);
+    }
+    if (useThumbnail) {
+      params.append('thumbnail', 'true');
+      params.append('quality', '85');
     }
     
-    // Fallback without token (will fail auth but better than crashing)
-    return `${API_BASE_URL}/singles/${sockId}/image`;
+    return `${API_BASE_URL}/singles/${sockId}/image?${params.toString()}`;
   },
 
   // Get background-removed image URL with authentication token
