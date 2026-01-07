@@ -45,7 +45,7 @@ alembic upgrade head
 ## Running the Server
 
 ```powershell
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0
 ```
 
 The API will be available at `http://localhost:8000`

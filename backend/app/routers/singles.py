@@ -4,6 +4,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from PIL import Image
+from rembg import remove
 from app.database import get_db
 from app.models import User, Sock, Match
 from app.schemas import SockResponse, SockMatch, MatchCreate, MatchResponse
@@ -40,10 +42,31 @@ async def upload_sock(
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = os.path.join(settings.upload_dir, unique_filename)
     
+    # Generate filename for background-removed version
+    unique_filename_no_bg = f"{uuid.uuid4()}_no_bg.png"
+    file_path_no_bg = os.path.join(settings.upload_dir, unique_filename_no_bg)
+    
     # Save the file
     with open(file_path, "wb") as buffer:
         content = await file.read()
         buffer.write(content)
+    
+    # Create background-removed version (non-critical - continue if this fails)
+    try:
+        with open(file_path, "rb") as img_file:
+            input_image = Image.open(img_file)
+            output_image = remove(input_image)
+            
+            # Crop the image to the bounding box of non-transparent pixels
+            bbox = output_image.getbbox()
+            if bbox:
+                output_image = output_image.crop(bbox)
+            
+            output_image.save(file_path_no_bg, "PNG")
+    except Exception as e:
+        # Log error but continue without background-removed version
+        print(f"Failed to remove background for {file_path}: {str(e)}")
+        file_path_no_bg = None  # Set to None so we don't save invalid path to DB
     
     # Create embedding
     try:
@@ -51,8 +74,11 @@ async def upload_sock(
         with open(file_path, "rb") as img_file:
             embedding_bytes = embedding_service.create_embedding(img_file)
     except Exception as e:
-        # Clean up file if embedding fails
-        os.remove(file_path)
+        # Clean up files if embedding fails
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if file_path_no_bg and os.path.exists(file_path_no_bg):
+            os.remove(file_path_no_bg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create embedding: {str(e)}"
@@ -62,6 +88,7 @@ async def upload_sock(
     new_sock = Sock(
         owner_id=current_user.id,
         image_path=file_path,
+        image_no_bg_path=file_path_no_bg,
         embedding=embedding_bytes
     )
     
@@ -170,6 +197,65 @@ def get_sock_image(
     )
 
 
+@router.get("/{sock_id}/image-no-bg")
+def get_sock_image_no_bg(
+    sock_id: int,
+    token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Get the background-removed image file for a specific sock. Supports token via query param for web or Authorization header."""
+    from app.auth import get_user_from_token
+    
+    current_user = None
+    
+    # Try query parameter token first (for web img tags)
+    if token:
+        current_user = get_user_from_token(token, db)
+    # Try Authorization header (for mobile/API requests)
+    elif authorization and authorization.startswith("Bearer "):
+        token_from_header = authorization.replace("Bearer ", "")
+        current_user = get_user_from_token(token_from_header, db)
+    
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    sock = db.query(Sock).filter(Sock.id == sock_id).first()
+    
+    if not sock:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sock not found"
+        )
+    
+    # Verify ownership
+    if sock.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this sock"
+        )
+    
+    # Check if background-removed file exists
+    if not sock.image_no_bg_path or not os.path.exists(sock.image_no_bg_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Background-removed image file not found"
+        )
+    
+    # Return file with CORS headers for web compatibility
+    return FileResponse(
+        sock.image_no_bg_path,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+
 @router.get("/{sock_id}/search", response_model=List[SockMatch])
 async def search_by_sock_id(
     sock_id: int,
@@ -253,6 +339,14 @@ def delete_sock(
         except Exception as e:
             # Log error but continue with database deletion
             print(f"Failed to delete image file {sock.image_path}: {str(e)}")
+    
+    # Delete the background-removed image file if it exists
+    if sock.image_no_bg_path and os.path.exists(sock.image_no_bg_path):
+        try:
+            os.remove(sock.image_no_bg_path)
+        except Exception as e:
+            # Log error but continue with database deletion
+            print(f"Failed to delete background-removed image file {sock.image_no_bg_path}: {str(e)}")
     
     # Delete the sock from database
     db.delete(sock)

@@ -194,6 +194,24 @@ export const socksAPI = {
     return `${API_BASE_URL}/singles/${sockId}/image`;
   },
 
+  // Get background-removed image URL with authentication token
+  getImageNoBgUrl: (sockId: number, token?: string): string => {
+    if (!token && isWeb) {
+      try {
+        token = getTokenSync() ?? undefined;
+      } catch (e) {
+        console.warn('[API] Could not get token synchronously');
+      }
+    }
+    
+    if (token) {
+      return `${API_BASE_URL}/singles/${sockId}/image-no-bg?token=${encodeURIComponent(token)}`;
+    }
+    
+    // Fallback without token (will fail auth but better than crashing)
+    return `${API_BASE_URL}/singles/${sockId}/image-no-bg`;
+  },
+
   delete: async (sockId: number): Promise<void> => {
     await api.delete(`/singles/${sockId}`);
   },

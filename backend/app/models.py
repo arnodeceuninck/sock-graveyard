@@ -21,6 +21,7 @@ class Sock(Base):
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     image_path = Column(String, nullable=False)
+    image_no_bg_path = Column(String, nullable=True)  # Path to image with background removed
     embedding = Column(LargeBinary, nullable=False)  # Stored as bytes
     is_matched = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,25 @@ export default function UploadScreen({ navigation }: any) {
   const [uploadedSockId, setUploadedSockId] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [authToken, setAuthToken] = useState<string>('');
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const imageContainerRef = useRef<View>(null);
+
+  // Scroll to the image when upload completes
+  useEffect(() => {
+    if (uploadedSockId && !isUploading && imageContainerRef.current) {
+      // Small delay to ensure layout is complete
+      setTimeout(() => {
+        imageContainerRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({ y, animated: true });
+          },
+          () => {} // error callback
+        );
+      }, 300);
+    }
+  }, [uploadedSockId, isUploading]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -177,7 +196,7 @@ export default function UploadScreen({ navigation }: any) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container}>
       <View style={styles.content}>
         <View style={styles.titleContainer}>
           <Image
@@ -207,8 +226,25 @@ export default function UploadScreen({ navigation }: any) {
         </View>
 
         {selectedImage && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.image} />
+          <View ref={imageContainerRef} style={styles.imageContainer}>
+            {uploadedSockId && !isUploading ? (
+              // Show gravestone with sock on top
+              <View style={styles.gravestoneContainer}>
+                <Image 
+                  source={require('../../assets/empty-gravestone.png')} 
+                  style={styles.gravestoneImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={{ uri: socksAPI.getImageNoBgUrl(uploadedSockId, authToken) }} 
+                  style={styles.sockOnGravestone}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              // Show original image while uploading
+              <Image source={{ uri: selectedImage }} style={styles.image} />
+            )}
             
             {isUploading && (
               <View style={styles.uploadingOverlay}>
@@ -329,6 +365,26 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderWidth: 2,
     borderColor: theme.colors.tombstone,
+  },
+  gravestoneContainer: {
+    width: '100%',
+    maxWidth: 400,
+    aspectRatio: 1,
+    alignSelf: 'center',
+    marginBottom: theme.spacing.md,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gravestoneImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  sockOnGravestone: {
+    width: '50%',
+    height: '50%',
+    marginTop: '0%',
   },
   uploadingOverlay: {
     position: 'absolute',
