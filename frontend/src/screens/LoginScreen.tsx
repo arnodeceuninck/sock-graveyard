@@ -15,20 +15,20 @@ import { theme, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
 
 export default function LoginScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!username.trim() || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Please enter email and password');
       return;
     }
 
     setIsLoading(true);
     try {
-      await login({ username: username.trim(), password });
+      await login({ email: email.trim(), password });
     } catch (error: any) {
       Alert.alert('Login Failed', error.response?.data?.detail || 'Invalid credentials');
     } finally {
@@ -54,12 +54,13 @@ export default function LoginScreen({ navigation }: any) {
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="Username"
+              placeholder="Email"
               placeholderTextColor={theme.colors.textMuted}
-              value={username}
-              onChangeText={setUsername}
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
+              keyboardType="email-address"
             />
 
             <TextInput

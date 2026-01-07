@@ -65,7 +65,7 @@ export const authAPI = {
 
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const formData = new FormData();
-    formData.append('username', data.username);
+    formData.append('username', data.email);
     formData.append('password', data.password);
     
     const response = await api.post<AuthResponse>('/auth/login', formData, {

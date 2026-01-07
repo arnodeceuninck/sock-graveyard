@@ -15,14 +15,14 @@ import { theme, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
 
 export default function RegisterScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
 
   const handleRegister = async () => {
-    if (!username.trim() || !password || !confirmPassword) {
+    if (!email.trim() || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -39,7 +39,7 @@ export default function RegisterScreen({ navigation }: any) {
 
     setIsLoading(true);
     try {
-      await register({ username: username.trim(), password });
+      await register({ email: email.trim(), password });
     } catch (error: any) {
       const message = error.response?.data?.detail || error.message || 'Registration failed';
       Alert.alert('Registration Failed', message);
@@ -66,12 +66,13 @@ export default function RegisterScreen({ navigation }: any) {
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="Username"
+              placeholder="Email"
               placeholderTextColor={theme.colors.textMuted}
-              value={username}
-              onChangeText={setUsername}
+              value={email}
+              onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
+              keyboardType="email-address"
             />
 
             <TextInput

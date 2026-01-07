@@ -4,13 +4,13 @@ from typing import Optional
 
 
 class UserCreate(BaseModel):
-    username: str
+    email: str
     password: str
 
 
 class UserResponse(BaseModel):
     id: int
-    username: str
+    email: str
     created_at: datetime
     
     class Config:
@@ -23,7 +23,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    email: Optional[str] = None
 
 
 class SockResponse(BaseModel):
