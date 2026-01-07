@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
+import GravestoneWithSock from '../components/GravestoneWithSock';
 import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
 
@@ -229,18 +230,10 @@ export default function UploadScreen({ navigation }: any) {
           <View ref={imageContainerRef} style={styles.imageContainer}>
             {uploadedSockId && !isUploading ? (
               // Show gravestone with sock on top
-              <View style={styles.gravestoneContainer}>
-                <Image 
-                  source={require('../../assets/empty-gravestone.png')} 
-                  style={styles.gravestoneImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={{ uri: socksAPI.getImageNoBgUrl(uploadedSockId, authToken) }} 
-                  style={styles.sockOnGravestone}
-                  resizeMode="contain"
-                />
-              </View>
+              <GravestoneWithSock
+                sockImageUri={socksAPI.getImageNoBgUrl(uploadedSockId, authToken)}
+                style={styles.gravestoneWrapper}
+              />
             ) : (
               // Show original image while uploading
               <Image source={{ uri: selectedImage }} style={styles.image} />
@@ -366,25 +359,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.tombstone,
   },
-  gravestoneContainer: {
-    width: '100%',
-    maxWidth: 400,
-    aspectRatio: 1,
-    alignSelf: 'center',
+  gravestoneWrapper: {
     marginBottom: theme.spacing.md,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gravestoneImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  sockOnGravestone: {
-    width: '50%',
-    height: '50%',
-    marginTop: '0%',
   },
   uploadingOverlay: {
     position: 'absolute',

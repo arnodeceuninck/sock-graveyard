@@ -12,6 +12,7 @@ import { Image } from 'expo-image';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock, SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';
+import GravestoneWithSock from '../components/GravestoneWithSock';
 import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
 
@@ -175,21 +176,12 @@ export default function SockDetailScreen({ route, navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Eternal Record</Text>
 
-          <View style={styles.gravestoneContainer}>
-            <Image 
-              source={require('../../assets/empty-gravestone.png')} 
-              style={styles.gravestoneImage}
-              contentFit="contain"
-              cachePolicy="memory-disk"
-            />
-            <Image 
-              source={{ uri: socksAPI.getImageNoBgUrl(sock.id, authToken) }} 
-              style={styles.sockOnGravestone}
-              contentFit="contain"
-              cachePolicy="memory-disk"
-              transition={200}
-            />
-          </View>
+          <GravestoneWithSock
+            sockImageUri={socksAPI.getImageNoBgUrl(sock.id, authToken)}
+            style={styles.gravestoneWrapper}
+            gravestoneStyle={styles.gravestoneImage}
+            sockStyle={styles.sockOnGravestone}
+          />
           
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Entered Graveyard:</Text>
@@ -366,26 +358,17 @@ const styles = StyleSheet.create({
     color: theme.colors.accent,
     marginBottom: theme.spacing.sm,
   },
-  gravestoneContainer: {
+  gravestoneWrapper: {
     width: '50%',
     maxWidth: 250,
-    aspectRatio: 1,
-    alignSelf: 'center',
     marginBottom: theme.spacing.sm,
     marginTop: -theme.spacing.sm,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   gravestoneImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
+    // Applied to gravestone image in component
   },
   sockOnGravestone: {
-    width: '50%',
-    height: '50%',
-    marginTop: '0%',
+    // Applied to sock image in component
   },
   detailRow: {
     flexDirection: 'row',
