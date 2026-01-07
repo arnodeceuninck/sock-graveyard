@@ -110,7 +110,7 @@ def list_unmatched_socks(
     socks = db.query(Sock).filter(
         Sock.owner_id == current_user.id,
         Sock.is_matched == False
-    ).all()
+    ).order_by(Sock.created_at.desc()).all()
     
     return socks
 

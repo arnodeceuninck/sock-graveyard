@@ -123,9 +123,8 @@ export default function SockDetailScreen({ route, navigation }: any) {
   };
 
   const viewSockDetail = (sockId: number) => {
-    // Reset the search results when navigating
-    setSimilarSocks([]);
-    setShowResults(false);
+    // Navigate to the new sock detail without clearing state
+    // When we come back, the matches will still be here
     navigation.push('SockDetail', { sockId });
   };
 

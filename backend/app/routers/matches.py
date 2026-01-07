@@ -20,7 +20,7 @@ def get_matches(
     matches = db.query(Match).options(
         joinedload(Match.sock1),
         joinedload(Match.sock2)
-    ).all()
+    ).order_by(Match.matched_at.desc()).all()
     
     # Filter to only include matches where both socks belong to current user
     user_matches = []
