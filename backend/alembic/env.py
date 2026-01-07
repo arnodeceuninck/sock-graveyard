@@ -7,7 +7,7 @@ from alembic import context
 
 # Import your models and config
 from app.database import Base
-from app.models import User, Sock
+from app.models import User, Sock, Match, RefreshToken
 from app.config import get_settings
 
 # this is the Alembic Config object, which provides

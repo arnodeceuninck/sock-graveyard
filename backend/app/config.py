@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = "your-secret-key-change-this-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60 * 24  # 24 hours
+    access_token_expire_minutes: int = 30  # 30 minutes
+    refresh_token_expire_days: int = 90  # 90 days
     
     # CORS
     cors_origins: list[str] = [

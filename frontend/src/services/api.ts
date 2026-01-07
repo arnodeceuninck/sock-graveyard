@@ -10,6 +10,7 @@ const api = axios.create({
 
 // Token management
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // Check if we're on web or native
 const isWeb = Platform.OS === 'web';
@@ -30,6 +31,27 @@ export const getToken = async () => {
   }
 };
 
+export const saveRefreshToken = async (token: string) => {
+  if (isWeb) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+  }
+};
+
+export const getRefreshToken = async () => {
+  if (isWeb) {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  } else {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  }
+};
+
+export const saveTokens = async (accessToken: string, refreshToken: string) => {
+  await saveToken(accessToken);
+  await saveRefreshToken(refreshToken);
+};
+
 // Synchronous version for web (used in image headers)
 export const getTokenSync = () => {
   if (isWeb) {
@@ -42,9 +64,50 @@ export const getTokenSync = () => {
 export const removeToken = async () => {
   if (isWeb) {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
   } else {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   }
+};
+
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+// Refresh the access token using the refresh token
+const refreshAccessToken = async (): Promise<string | null> => {
+  // If already refreshing, return the existing promise
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = await getRefreshToken();
+      if (!refreshToken) {
+        return null;
+      }
+
+      const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {
+        refresh_token: refreshToken,
+      });
+
+      const { access_token, refresh_token: newRefreshToken } = response.data;
+      await saveTokens(access_token, newRefreshToken);
+      return access_token;
+    } catch (error) {
+      // Refresh failed - clear tokens
+      await removeToken();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 };
 
 // Add token to requests
@@ -55,6 +118,31 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Handle 401 errors by refreshing the token
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If error is 401 and we haven't tried refreshing yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        // Retry the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } else {
+        // Refresh failed, redirect to login will be handled by AuthContext
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Auth API
 export const authAPI = {

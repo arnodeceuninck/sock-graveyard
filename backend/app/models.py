@@ -13,6 +13,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     socks = relationship("Sock", back_populates="owner")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
 
 
 class Sock(Base):
@@ -46,3 +47,16 @@ class Match(Base):
     user = relationship("User", backref="matches")
     sock1 = relationship("Sock", foreign_keys=[sock1_id], back_populates="matches_as_sock1")
     sock2 = relationship("Sock", foreign_keys=[sock2_id], back_populates="matches_as_sock2")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token_hash = Column(String, unique=True, index=True, nullable=False)  # Hashed token for security
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    
+    user = relationship("User", back_populates="refresh_tokens")

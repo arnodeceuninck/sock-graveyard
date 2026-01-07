@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authAPI, saveToken, getToken, removeToken } from '../services/api';
+import { authAPI, saveTokens, getToken, removeToken } from '../services/api';
 import { User, LoginRequest, RegisterRequest } from '../types';
 
 interface AuthContextType {
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: LoginRequest) => {
     const response = await authAPI.login(data);
-    await saveToken(response.access_token);
+    await saveTokens(response.access_token, response.refresh_token);
     const userData = await authAPI.me();
     setUser(userData);
   };
