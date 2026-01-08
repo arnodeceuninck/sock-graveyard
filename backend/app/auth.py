@@ -44,7 +44,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password."""
     user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
+    if not user:
+        return None
+    # For OAuth users (no password), only authenticate via OAuth
+    if not user.hashed_password:
+        return None
+    if not verify_password(password, user.hashed_password):
         return None
     return user
 

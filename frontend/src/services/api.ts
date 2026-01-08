@@ -80,6 +80,13 @@ export const authAPI = {
     const response = await api.get<User>('/auth/me');
     return response.data;
   },
+
+  googleAuth: async (idToken: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/google', {
+      id_token: idToken,
+    });
+    return response.data;
+  },
 };
 
 // Socks API

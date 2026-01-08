@@ -10,15 +10,46 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    androidClientId: '458929815388-ar26q0t2mmqi5r70g8scikncrjri4mei.apps.googleusercontent.com',
+    webClientId: '458929815388-10a0rbli2n82gr61elor6eg3m83ncs23.apps.googleusercontent.com',
+    redirectUri: makeRedirectUri({
+      scheme: 'com.arnodece.socks',
+    }),
+  });
+
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      handleGoogleLogin(id_token);
+    }
+  }, [response]);
+
+  const handleGoogleLogin = async (idToken: string) => {
+    setIsLoading(true);
+    try {
+      await googleLogin(idToken);
+    } catch (error: any) {
+      Alert.alert('Google Login Failed', error.response?.data?.detail || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -80,6 +111,26 @@ export default function LoginScreen({ navigation }: any) {
             >
               <Text style={styles.buttonText}>
                 {isLoading ? 'Logging in...' : 'Login'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
+              onPress={() => promptAsync()}
+              disabled={!request || isLoading}
+            >
+              <Image
+                source={require('../../assets/google.png')}
+                style={styles.googleLogo}
+              />
+              <Text style={styles.googleButtonText}>
+                {isLoading ? 'Signing in...' : 'Sign in with Google'}
               </Text>
             </TouchableOpacity>
 
@@ -168,6 +219,42 @@ const styles = StyleSheet.create({
   buttonText: {
     ...theme.typography.button,
     color: theme.colors.textInverse,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: theme.spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.tombstone,
+  },
+  dividerText: {
+    marginHorizontal: theme.spacing.md,
+    color: theme.colors.textMuted,
+    fontSize: 14,
+  },
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
+  },
+  googleLogo: {
+    width: 20,
+    height: 20,
+    marginRight: theme.spacing.sm,
+  },
+  googleButtonText: {
+    ...theme.typography.button,
+    color: '#000000',
   },
   linkButton: {
     marginTop: theme.spacing.lg,

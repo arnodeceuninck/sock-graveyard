@@ -35,6 +35,41 @@ sock-graveyard/
 
 ## Quick Start
 
+### Prerequisites
+
+Before starting, you need to configure the following files manually:
+
+#### Required Configuration Files
+
+1. **Backend Environment Variables**
+   - Copy `backend/.env.example` to `backend/.env`
+   - Set `SECRET_KEY`, `DATABASE_URL`, and Google OAuth credentials
+
+2. **Frontend Google OAuth (Required for Google Sign-In)**
+   
+   **credentials.json**:
+   - Copy `frontend/credentials.json.template` to `frontend/credentials.json`
+   - Fill in your Android keystore details:
+     - `keystorePassword`: Your keystore password
+     - `keyAlias`: Your key alias name
+     - `keyPassword`: Your key password
+   - Get these from your keystore with: `keytool -list -v -keystore path/to/keystore.jks`
+   
+   **google-services.json**:
+   - Copy `frontend/google-services.json.template` to `frontend/google-services.json`
+   - Download the actual file from [Firebase Console](https://console.firebase.google.com/)
+   - Add Android app with package name: `com.arnodece.socks`
+   - Download `google-services.json` and place in `frontend/` directory
+
+   **Google Cloud Console Setup**:
+   - Create OAuth 2.0 credentials for Android (package: `com.arnodece.socks`)
+   - Add your keystore's SHA-1 fingerprint to the Android OAuth client
+   - Update client IDs in `backend/app/config.py` and `frontend/src/screens/LoginScreen.tsx`
+
+3. **Android Keystore**
+   - Place your keystore file at `authentication/siwg/sock-graveyard.jks`
+   - Or update the path in `frontend/credentials.json`
+
 ### Backend Setup
 
 ```powershell
@@ -103,12 +138,23 @@ Scan QR code with Expo Go app to run on your device.
 - Axios
 - Expo Image Picker
 - Expo Secure Store
+- Expo Auth Session (Google Sign-In)
+
+## Features
+
+- 🔐 **Authentication**: Email/password and Google Sign-In support
+- 📸 **Image Upload**: Camera or gallery integration
+- 🤖 **AI Matching**: EfficientNet-B0 embeddings with cosine similarity
+- 🧦 **Smart Organization**: Auto-match similar socks
+- 📱 **Mobile First**: React Native app with Expo
+- 🔒 **Secure**: JWT tokens with Argon2 password hashing
 
 ## API Endpoints
 
 ### Authentication
 - `POST /auth/register` - Register new user
 - `POST /auth/login` - Login and get JWT token
+- `POST /auth/google` - Authenticate with Google ID token
 - `GET /auth/me` - Get current user info
 
 ### Socks
@@ -122,6 +168,19 @@ Scan QR code with Expo Go app to run on your device.
 
 - [Backend Documentation](backend/README.md)
 - [Frontend Documentation](frontend/README.md)
+- [Google Sign-In Setup Guide](GOOGLE_SIGNIN_SETUP.md)
+
+## Important Notes
+
+⚠️ **Configuration Files Not Included**
+
+The following files are required but not included in the repository for security:
+- `frontend/credentials.json` (use `credentials.json.template`)
+- `frontend/google-services.json` (use `google-services.json.template`)
+- `authentication/siwg/sock-graveyard.jks` (your Android keystore)
+- `backend/.env` (backend environment variables)
+
+See the **Prerequisites** section above for setup instructions.
 
 ## Development
 

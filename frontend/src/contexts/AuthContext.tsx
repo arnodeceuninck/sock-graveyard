@@ -11,6 +11,7 @@ interface AuthContextType {
   tutorialCompleted: boolean;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   completeTutorial: () => Promise<void>;
 }
@@ -57,6 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await login(data);
   };
 
+  const googleLogin = async (idToken: string) => {
+    const response = await authAPI.googleAuth(idToken);
+    await saveToken(response.access_token);
+    const userData = await authAPI.me();
+    setUser(userData);
+  };
+
   const logout = async () => {
     await removeToken();
     setUser(null);
@@ -68,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, tutorialCompleted, login, register, logout, completeTutorial }}>
+    <AuthContext.Provider value={{ user, isLoading, tutorialCompleted, login, register, googleLogin, logout, completeTutorial }}>
       {children}
     </AuthContext.Provider>
   );

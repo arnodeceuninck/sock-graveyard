@@ -14,3 +14,5 @@ torchvision>=0.15.0
 pgvector>=0.2.0
 rembg>=2.0.0
 rembg[cpu]
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0

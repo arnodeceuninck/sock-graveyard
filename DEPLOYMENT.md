@@ -161,8 +161,8 @@ npx eas-cli login
 npx eas-cli build:configure
 
 # Build for Android (production)
-npx eas-cli build --platform android --profile production
-npx eas-cli build --platform android --profile production-apk
+npx eas-cli build --platform android --profile production --local
+npx eas-cli build --platform android --profile production-apk --local
 ```
 Somehow eas-cli randomly adds audio record permission, corresponds to this issue: https://github.com/expo/expo/issues/27040
 

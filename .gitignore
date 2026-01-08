@@ -8,3 +8,12 @@ __pycache__
 node_modules
 .expo
 dist
+
+# Google OAuth credentials
+authentication/
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+credentials.json
+
