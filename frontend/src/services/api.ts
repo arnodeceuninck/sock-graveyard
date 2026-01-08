@@ -81,9 +81,31 @@ export const authAPI = {
     return response.data;
   },
 
-  googleAuth: async (idToken: string): Promise<AuthResponse> => {
+  googleAuth: async (idToken: string, termsAccepted: boolean = false, privacyAccepted: boolean = false): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/google', {
       id_token: idToken,
+      terms_accepted: termsAccepted,
+      terms_version: '1.0',
+      privacy_accepted: privacyAccepted,
+      privacy_version: '1.0',
+    });
+    return response.data;
+  },
+
+  acceptTerms: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/accept-terms', {
+      email,
+      password,
+      terms_version: '1.0',
+      privacy_version: '1.0',
+    });
+    return response.data;
+  },
+
+  acceptTermsForCurrentUser: async (): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/auth/accept-terms-for-current-user', {
+      terms_version: '1.0',
+      privacy_version: '1.0',
     });
     return response.data;
   },

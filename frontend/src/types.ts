@@ -2,6 +2,8 @@ export interface User {
   id: number;
   email: string;
   created_at: string;
+  terms_accepted: boolean;
+  privacy_accepted: boolean;
 }
 
 export interface Sock {

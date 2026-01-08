@@ -14,6 +14,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI, saveToken } from '../services/api';
 import { theme, SOCK_EMOJIS } from '../theme';
 import { Alert } from '../utils/alert';
 
@@ -41,13 +42,14 @@ export default function LoginScreen({ navigation }: any) {
   }, [response]);
 
   const handleGoogleLogin = async (idToken: string) => {
+    // Try login (terms will be checked after successful login)
     setIsLoading(true);
     try {
       await googleLogin(idToken);
+      // Success - will check terms in AuthContext
     } catch (error: any) {
-      Alert.alert('Google Login Failed', error.response?.data?.detail || 'Authentication failed');
-    } finally {
       setIsLoading(false);
+      Alert.alert('Google Login Failed', error.response?.data?.detail || 'Authentication failed');
     }
   };
 
@@ -60,6 +62,7 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       await login({ email: email.trim(), password });
+      // Success - terms will be checked in AuthContext
     } catch (error: any) {
       Alert.alert('Login Failed', error.response?.data?.detail || 'Invalid credentials');
     } finally {
@@ -277,5 +280,77 @@ const styles = StyleSheet.create({
   legalSeparator: {
     color: theme.colors.textMuted,
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xl,
+    width: '85%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+  modalTitle: {
+    ...theme.typography.h2,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  checkboxContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  checkboxBox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: theme.colors.tombstone,
+    borderRadius: 4,
+    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  checkboxMark: {
+    color: theme.colors.textInverse,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxText: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  linkTextInline: {
+    color: theme.colors.accent,
+    textDecorationLine: 'underline',
+  },
+  modalCancelButton: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+    padding: theme.spacing.sm,
+  },
+  modalCancelText: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
   },
 });

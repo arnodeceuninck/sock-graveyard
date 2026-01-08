@@ -12,6 +12,14 @@ class User(Base):
     hashed_password = Column(String, nullable=True)  # Nullable for OAuth users
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    # Terms acceptance tracking
+    terms_accepted = Column(Boolean, default=False)
+    terms_accepted_at = Column(DateTime, nullable=True)
+    terms_version = Column(String, nullable=True)  # e.g., "1.0"
+    privacy_accepted = Column(Boolean, default=False)
+    privacy_accepted_at = Column(DateTime, nullable=True)
+    privacy_version = Column(String, nullable=True)  # e.g., "1.0"
+    
     socks = relationship("Sock", back_populates="owner")
 
 

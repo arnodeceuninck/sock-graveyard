@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI, saveToken, getToken, removeToken } from '../services/api';
 import { User, LoginRequest, RegisterRequest } from '../types';
+import TermsAcceptanceModal from '../components/TermsAcceptanceModal';
 
 const TUTORIAL_COMPLETED_KEY = '@sock_graveyard_tutorial_completed';
 
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const googleLogin = async (idToken: string) => {
-    const response = await authAPI.googleAuth(idToken);
+    const response = await authAPI.googleAuth(idToken, false, false);
     await saveToken(response.access_token);
     const userData = await authAPI.me();
     setUser(userData);
@@ -75,9 +76,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTutorialCompleted(true);
   };
 
+  const handleTermsAccepted = async () => {
+    // Refresh user data to get updated terms acceptance
+    try {
+      const userData = await authAPI.me();
+      setUser(userData);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  // Show terms modal if user is logged in but hasn't accepted terms
+  const showTermsModal = user && (!user.terms_accepted || !user.privacy_accepted);
+
   return (
     <AuthContext.Provider value={{ user, isLoading, tutorialCompleted, login, register, googleLogin, logout, completeTutorial }}>
       {children}
+      <TermsAcceptanceModal
+        visible={!!showTermsModal}
+        onAccepted={handleTermsAccepted}
+        onLogout={handleLogout}
+        userEmail={user?.email}
+      />
     </AuthContext.Provider>
   );
 };
