@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock } from '../types';

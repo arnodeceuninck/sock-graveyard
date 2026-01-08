@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import { socksAPI, getToken, getTokenSync } from '../services/api';
 import { Sock, SockMatch } from '../types';
 import SimilarSocksList from '../components/SimilarSocksList';

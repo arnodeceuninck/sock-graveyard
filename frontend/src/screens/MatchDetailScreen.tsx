@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import { matchesAPI, socksAPI, getToken, getTokenSync } from '../services/api';
 import { Match } from '../types';
 import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';

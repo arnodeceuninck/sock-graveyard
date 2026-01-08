@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 
 interface GravestoneWithSockProps {
   sockImageUri: string;

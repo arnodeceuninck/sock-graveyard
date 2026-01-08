@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   Modal,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import { socksAPI, matchesAPI } from '../services/api';
 import { SockMatch } from '../types';
 import { theme, SOCK_EMOJIS, GHOST_EMOJIS } from '../theme';
