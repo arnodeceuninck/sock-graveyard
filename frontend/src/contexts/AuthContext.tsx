@@ -1,13 +1,18 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI, saveToken, getToken, removeToken } from '../services/api';
 import { User, LoginRequest, RegisterRequest } from '../types';
+
+const TUTORIAL_COMPLETED_KEY = '@sock_graveyard_tutorial_completed';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  tutorialCompleted: boolean;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  completeTutorial: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -27,6 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = await authAPI.me();
         setUser(userData);
       }
+      
+      // Check if tutorial has been completed
+      const tutorialStatus = await AsyncStorage.getItem(TUTORIAL_COMPLETED_KEY);
+      setTutorialCompleted(tutorialStatus === 'true');
     } catch (error) {
       console.error('Auth check failed:', error);
       await removeToken();
@@ -52,8 +62,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const completeTutorial = async () => {
+    await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+    setTutorialCompleted(true);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, tutorialCompleted, login, register, logout, completeTutorial }}>
       {children}
     </AuthContext.Provider>
   );

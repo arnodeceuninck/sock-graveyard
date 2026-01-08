@@ -9,6 +9,7 @@ import { theme, GHOST_EMOJIS, SOCK_EMOJIS } from '../theme';
 // Screens
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import TutorialScreen from '../screens/TutorialScreen';
 import UploadScreen from '../screens/UploadScreen';
 import SocksScreen from '../screens/SocksScreen';
 import SockDetailScreen from '../screens/SockDetailScreen';
@@ -191,10 +192,23 @@ function MainStack() {
 }
 
 export default function AppNavigator() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, tutorialCompleted, completeTutorial } = useAuth();
 
   if (isLoading) {
     return null; // Or a loading screen
+  }
+
+  // Show tutorial if user is not logged in and hasn't completed tutorial
+  if (!user && !tutorialCompleted) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tutorial">
+            {() => <TutorialScreen onComplete={completeTutorial} />}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
   }
 
   return (
