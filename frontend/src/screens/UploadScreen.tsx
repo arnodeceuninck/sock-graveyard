@@ -228,16 +228,8 @@ export default function UploadScreen({ navigation }: any) {
 
         {selectedImage && (
           <View ref={imageContainerRef} style={styles.imageContainer}>
-            {uploadedSockId && !isUploading ? (
-              // Show gravestone with sock on top
-              <GravestoneWithSock
-                sockImageUri={socksAPI.getImageNoBgUrl(uploadedSockId, authToken)}
-                style={styles.gravestoneWrapper}
-              />
-            ) : (
-              // Show original image while uploading
-              <Image source={{ uri: selectedImage }} style={styles.image} />
-            )}
+            {/* Always show original image */}
+            <Image source={{ uri: selectedImage }} style={styles.image} />
             
             {isUploading && (
               <View style={styles.uploadingOverlay}>

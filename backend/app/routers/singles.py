@@ -3,7 +3,7 @@ import uuid
 import hashlib
 from io import BytesIO
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header, BackgroundTasks
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -23,8 +23,43 @@ settings = get_settings()
 os.makedirs(settings.upload_dir, exist_ok=True)
 
 
+def process_background_removal(sock_id: int, file_path: str, upload_dir: str):
+    """Background task to remove background from uploaded sock image."""
+    try:
+        # Generate filename for background-removed version
+        unique_filename_no_bg = f"{uuid.uuid4()}_no_bg.png"
+        file_path_no_bg = os.path.join(upload_dir, unique_filename_no_bg)
+        
+        # Create background-removed version
+        with open(file_path, "rb") as img_file:
+            input_image = Image.open(img_file)
+            output_image = remove(input_image)
+            
+            # Crop the image to the bounding box of non-transparent pixels
+            bbox = output_image.getbbox()
+            if bbox:
+                output_image = output_image.crop(bbox)
+            
+            output_image.save(file_path_no_bg, "PNG")
+        
+        # Update the database with the background-removed image path
+        from app.database import SessionLocal
+        db = SessionLocal()
+        try:
+            sock = db.query(Sock).filter(Sock.id == sock_id).first()
+            if sock:
+                sock.image_no_bg_path = file_path_no_bg
+                db.commit()
+                print(f"Background removed successfully for sock {sock_id}")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Failed to remove background for sock {sock_id}: {str(e)}")
+
+
 @router.post("/upload", response_model=SockResponse, status_code=status.HTTP_201_CREATED)
 async def upload_sock(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -45,31 +80,10 @@ async def upload_sock(
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = os.path.join(settings.upload_dir, unique_filename)
     
-    # Generate filename for background-removed version
-    unique_filename_no_bg = f"{uuid.uuid4()}_no_bg.png"
-    file_path_no_bg = os.path.join(settings.upload_dir, unique_filename_no_bg)
-    
     # Save the file
     with open(file_path, "wb") as buffer:
         content = await file.read()
         buffer.write(content)
-    
-    # Create background-removed version (non-critical - continue if this fails)
-    try:
-        with open(file_path, "rb") as img_file:
-            input_image = Image.open(img_file)
-            output_image = remove(input_image)
-            
-            # Crop the image to the bounding box of non-transparent pixels
-            bbox = output_image.getbbox()
-            if bbox:
-                output_image = output_image.crop(bbox)
-            
-            output_image.save(file_path_no_bg, "PNG")
-    except Exception as e:
-        # Log error but continue without background-removed version
-        print(f"Failed to remove background for {file_path}: {str(e)}")
-        file_path_no_bg = None  # Set to None so we don't save invalid path to DB
     
     # Create embedding
     try:
@@ -77,11 +91,9 @@ async def upload_sock(
         with open(file_path, "rb") as img_file:
             embedding_bytes = embedding_service.create_embedding(img_file)
     except Exception as e:
-        # Clean up files if embedding fails
+        # Clean up file if embedding fails
         if os.path.exists(file_path):
             os.remove(file_path)
-        if file_path_no_bg and os.path.exists(file_path_no_bg):
-            os.remove(file_path_no_bg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create embedding: {str(e)}"
@@ -93,18 +105,26 @@ async def upload_sock(
     ).scalar()
     next_sequence_id = (max_sequence or 0) + 1
     
-    # Create sock record
+    # Create sock record (without background-removed image initially)
     new_sock = Sock(
         owner_id=current_user.id,
         user_sequence_id=next_sequence_id,
         image_path=file_path,
-        image_no_bg_path=file_path_no_bg,
+        image_no_bg_path=None,  # Will be updated by background task
         embedding=embedding_bytes
     )
     
     db.add(new_sock)
     db.commit()
     db.refresh(new_sock)
+    
+    # Schedule background removal as a background task
+    background_tasks.add_task(
+        process_background_removal,
+        new_sock.id,
+        file_path,
+        settings.upload_dir
+    )
     
     return new_sock
 
