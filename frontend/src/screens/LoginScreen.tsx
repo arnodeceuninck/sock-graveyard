@@ -30,7 +30,8 @@ export default function LoginScreen({ navigation }: any) {
     androidClientId: '458929815388-ar26q0t2mmqi5r70g8scikncrjri4mei.apps.googleusercontent.com',
     webClientId: '458929815388-10a0rbli2n82gr61elor6eg3m83ncs23.apps.googleusercontent.com',
     redirectUri: makeRedirectUri({
-      scheme: 'com.arnodece.socks',
+      scheme: undefined,
+      useProxy: true,
     }),
   });
 

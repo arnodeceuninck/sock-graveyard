@@ -27,8 +27,7 @@
       "package": "com.arnodece.socks",
       "permissions": [
         "android.permission.RECORD_AUDIO"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
