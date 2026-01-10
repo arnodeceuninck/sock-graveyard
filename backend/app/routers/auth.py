@@ -129,16 +129,24 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
     """Authenticate with Google ID token."""
     try:
         # Verify the Google ID token
-        # Accept tokens from both web and Android clients
-        idinfo = id_token.verify_oauth2_token(
-            auth_data.id_token,
-            requests.Request(),
-            settings.google_client_id
-        )
+        # Try to verify with web client ID first, then Android client ID
+        idinfo = None
+        last_error = None
         
-        # Verify the token is for our app
-        if idinfo['aud'] not in [settings.google_client_id, settings.google_android_client_id]:
-            raise ValueError('Invalid audience.')
+        for client_id in [settings.google_client_id, settings.google_android_client_id]:
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    auth_data.id_token,
+                    requests.Request(),
+                    client_id
+                )
+                break  # Successfully verified
+            except ValueError as e:
+                last_error = e
+                continue  # Try next client ID
+        
+        if idinfo is None:
+            raise ValueError(f'Token has wrong audience, expected one of [{settings.google_client_id}, {settings.google_android_client_id}]')
         
         # Get user email from token
         email = idinfo.get('email')
