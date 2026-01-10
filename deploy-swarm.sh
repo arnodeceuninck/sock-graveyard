@@ -7,8 +7,8 @@ echo "🚀 Starting deployment with rolling updates..."
 echo "📥 Pulling latest code..."
 git pull
 
-echo "🔨 Building new images..."
-docker compose build
+echo "🔨 Building and tagging images..."
+docker compose build --pull
 
 echo "🔄 Deploying with rolling update..."
 docker stack deploy -c docker-compose.yml sock-graveyard

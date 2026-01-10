@@ -115,4 +115,4 @@ volumes:
 
 networks:
   sock-network:
-    driver: bridge
+    driver: overlay
