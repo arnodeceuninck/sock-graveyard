@@ -104,8 +104,12 @@ services:
     restart: always
     ports:
       - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - sock-network
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/conf.d/default.conf
+        mode: 0444
     depends_on:
       - frontend
     deploy:
@@ -131,3 +135,7 @@ networks:
   sock-network:
     driver: overlay
     attachable: true
+
+configs:
+  nginx_conf:
+    file: ./nginx.conf
