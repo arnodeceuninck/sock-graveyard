@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, ImageStyle } from 'react-native';
 import { Image } from 'react-native';
 
 interface GravestoneWithSockProps {
   sockImageUri: string;
   style?: ViewStyle;
-  gravestoneStyle?: ViewStyle;
-  sockStyle?: ViewStyle;
+  gravestoneStyle?: ImageStyle;
+  sockStyle?: ImageStyle;
 }
 
 export default function GravestoneWithSock({
@@ -24,12 +24,14 @@ export default function GravestoneWithSock({
         style={[styles.gravestoneImage, gravestoneStyle, !sockLoaded && styles.hidden]}
         resizeMode="contain"
       />
-      <Image
-        source={{ uri: sockImageUri }}
-        style={[styles.sockOnGravestone, sockStyle, !sockLoaded && styles.hidden]}
-        resizeMode="contain"
-        onLoad={() => setSockLoaded(true)}
-      />
+      <View style={styles.sockClipArea}>
+        <Image
+          source={{ uri: sockImageUri }}
+          style={[styles.sockOnGravestone, sockStyle, !sockLoaded && styles.hidden]}
+          resizeMode="contain"
+          onLoad={() => setSockLoaded(true)}
+        />
+      </View>
     </View>
   );
 }
@@ -49,10 +51,17 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'absolute',
   },
-  sockOnGravestone: {
-    width: '50%',
+  sockClipArea: {
+    width: '30%',
     height: '50%',
-    marginTop: '0%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    // backgroundColor: 'rgba(255, 0, 0, 0.3)',
+  },
+  sockOnGravestone: {
+    width: '100%',
+    height: '100%',
   },
   hidden: {
     opacity: 0,
