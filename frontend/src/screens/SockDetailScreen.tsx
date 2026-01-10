@@ -198,6 +198,33 @@ export default function SockDetailScreen({ route, navigation }: any) {
               {sock.is_matched ? 'Matched' : 'Unmatched'}
             </Text>
           </View>
+
+          {sock.color_palette && (() => {
+            try {
+              const colors = JSON.parse(sock.color_palette);
+              if (Array.isArray(colors) && colors.length > 0) {
+                return (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Soul Colors:</Text>
+                    <View style={styles.colorPaletteContainer}>
+                      {colors.map((color: string, index: number) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.colorSwatch,
+                            { backgroundColor: color }
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                );
+              }
+            } catch (e) {
+              console.warn('Failed to parse color palette:', e);
+            }
+            return null;
+          })()}
         </View>
 
         {!showResults && (
@@ -382,6 +409,19 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
     marginLeft: theme.spacing.sm,
+  },
+  colorPaletteContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.xs,
+    alignItems: 'center',
+  },
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
+    ...theme.shadows.small,
   },
   actions: {
     marginTop: theme.spacing.sm,

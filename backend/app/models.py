@@ -31,6 +31,7 @@ class Sock(Base):
     user_sequence_id = Column(Integer, nullable=False)  # Sequential ID per user (1, 2, 3...)
     image_path = Column(String, nullable=False)
     image_no_bg_path = Column(String, nullable=True)  # Path to image with background removed
+    color_palette = Column(String, nullable=True)  # JSON array of hex color codes
     embedding = Column(LargeBinary, nullable=False)  # Stored as bytes
     is_matched = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

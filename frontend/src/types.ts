@@ -12,6 +12,7 @@ export interface Sock {
   image_path: string;
   is_matched: boolean;
   created_at: string;
+  color_palette?: string | null;  // JSON array of hex color codes
 }
 
 export interface SockMatch {

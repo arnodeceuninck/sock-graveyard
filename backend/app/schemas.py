@@ -34,6 +34,7 @@ class SockResponse(BaseModel):
     image_path: str
     is_matched: bool
     created_at: datetime
+    color_palette: Optional[str] = None  # JSON array of hex color codes
     
     class Config:
         from_attributes = True

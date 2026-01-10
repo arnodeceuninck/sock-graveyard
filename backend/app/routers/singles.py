@@ -1,14 +1,18 @@
 import os
 import uuid
 import hashlib
+import json
 from io import BytesIO
 from typing import List, Optional
+from collections import Counter
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Header, BackgroundTasks
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from PIL import Image
 from rembg import remove
+from sklearn.cluster import KMeans
+import numpy as np
 from app.database import get_db
 from app.models import User, Sock, Match
 from app.schemas import SockResponse, SockMatch, MatchCreate, MatchResponse
@@ -21,6 +25,134 @@ settings = get_settings()
 
 # Ensure upload directory exists
 os.makedirs(settings.upload_dir, exist_ok=True)
+
+
+def extract_color_palette(image: Image.Image, num_colors: int = 5) -> List[str]:
+    """
+    Extract dominant and distinctive colors from an image with transparent background.
+    Captures both common colors and important accent colors.
+    Returns a list of hex color codes.
+    """
+    try:
+        # Convert to RGB if needed (handling RGBA)
+        if image.mode == 'RGBA':
+            # Get only non-transparent pixels
+            pixels = []
+            for x in range(image.width):
+                for y in range(image.height):
+                    pixel = image.getpixel((x, y))
+                    # Only include pixels with significant alpha (not transparent)
+                    if pixel[3] > 128:  # Alpha channel > 128 (50% opacity)
+                        pixels.append(pixel[:3])  # Take only RGB, ignore alpha
+            
+            if not pixels:
+                return []
+            
+            # Convert to numpy array
+            pixels_array = np.array(pixels)
+        else:
+            # If not RGBA, convert to RGB
+            image_rgb = image.convert('RGB')
+            pixels_array = np.array(image_rgb).reshape(-1, 3)
+        
+        # Extract more colors initially to capture accent colors
+        initial_colors = min(15, len(pixels_array))
+        if len(pixels_array) < initial_colors:
+            initial_colors = max(1, len(pixels_array))
+        
+        kmeans = KMeans(n_clusters=initial_colors, random_state=42, n_init=10)
+        kmeans.fit(pixels_array)
+        
+        # Get the colors with their frequencies
+        colors = kmeans.cluster_centers_
+        labels = kmeans.labels_
+        label_counts = Counter(labels)
+        
+        def color_distance(c1, c2):
+            """Calculate Euclidean distance between two colors."""
+            return np.sqrt(np.sum((c1 - c2) ** 2))
+        
+        def color_saturation(color):
+            """Calculate color saturation (how vibrant/distinct it is)."""
+            r, g, b = color / 255.0
+            max_val = max(r, g, b)
+            min_val = min(r, g, b)
+            if max_val == 0:
+                return 0
+            return (max_val - min_val) / max_val
+        
+        # Create list of colors with metadata
+        color_data = []
+        for i in range(len(colors)):
+            color = colors[i]
+            frequency = label_counts[i]
+            saturation = color_saturation(color)
+            # Score combines frequency and saturation to capture both common and vibrant colors
+            # Boost saturation importance to catch accent colors
+            score = (frequency ** 0.7) * (1 + saturation * 2)
+            color_data.append({
+                'color': color,
+                'frequency': frequency,
+                'saturation': saturation,
+                'score': score
+            })
+        
+        # Sort by score (balances frequency and distinctiveness)
+        color_data.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Ensure highly saturated colors (accent colors) are prioritized
+        # Separate high saturation colors and prioritize them
+        high_sat_colors = [d for d in color_data if d['saturation'] > 0.4]
+        low_sat_colors = [d for d in color_data if d['saturation'] <= 0.4]
+        
+        # Select diverse colors - avoid very similar colors
+        selected_colors = []
+        min_distance = 30  # Reduced threshold to allow more color variation
+        
+        # First pass: Add high saturation (vibrant) colors to ensure accent colors are included
+        for data in high_sat_colors:
+            color = data['color']
+            # Check if this color is sufficiently different from already selected colors
+            is_distinct = True
+            for selected in selected_colors:
+                if color_distance(color, selected) < min_distance:
+                    is_distinct = False
+                    break
+            
+            if is_distinct:
+                selected_colors.append(color)
+            
+            # Stop if we have enough colors
+            if len(selected_colors) >= num_colors:
+                break
+        
+        # Second pass: Fill remaining slots with less saturated (base) colors
+        for data in low_sat_colors:
+            if len(selected_colors) >= num_colors:
+                break
+                
+            color = data['color']
+            # Check if this color is sufficiently different from already selected colors
+            is_distinct = True
+            for selected in selected_colors:
+                if color_distance(color, selected) < min_distance:
+                    is_distinct = False
+                    break
+            
+            if is_distinct:
+                selected_colors.append(color)
+        
+        # Convert to hex codes
+        hex_colors = []
+        for color in selected_colors:
+            r, g, b = color.astype(int)
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            hex_colors.append(hex_color)
+        
+        return hex_colors
+    except Exception as e:
+        print(f"Failed to extract color palette: {str(e)}")
+        return []
 
 
 def process_background_removal(sock_id: int, file_path: str, upload_dir: str):
@@ -42,15 +174,20 @@ def process_background_removal(sock_id: int, file_path: str, upload_dir: str):
             
             output_image.save(file_path_no_bg, "PNG")
         
-        # Update the database with the background-removed image path
+        # Extract color palette from the background-removed image
+        color_palette = extract_color_palette(output_image, num_colors=5)
+        color_palette_json = json.dumps(color_palette) if color_palette else None
+        
+        # Update the database with the background-removed image path and color palette
         from app.database import SessionLocal
         db = SessionLocal()
         try:
             sock = db.query(Sock).filter(Sock.id == sock_id).first()
             if sock:
                 sock.image_no_bg_path = file_path_no_bg
+                sock.color_palette = color_palette_json
                 db.commit()
-                print(f"Background removed successfully for sock {sock_id}")
+                print(f"Background removed and color palette extracted for sock {sock_id}: {color_palette}")
         finally:
             db.close()
     except Exception as e:
