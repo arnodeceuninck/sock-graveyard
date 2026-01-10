@@ -10,7 +10,14 @@ git pull
 echo "🔨 Building new images..."
 docker compose build --pull
 
-echo "🔄 Deploying stack with rolling updates..."
+# Docker swarm env_file doesn't work: https://blog.justanotheruptime.com/posts/2025_09_25_env_file_and_docker_swarm/
+echo "� Loading environment variables from .env..."
+set -a
+source .env
+set +a
+echo "✓ Environment variables loaded"
+
+echo "�🔄 Deploying stack with rolling updates..."
 docker stack deploy -c docker-compose.yml sock-graveyard
 
 echo "⏳ Waiting for services to stabilize..."
