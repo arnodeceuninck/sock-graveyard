@@ -33,7 +33,7 @@ services:
       placement:
         constraints:
           - node.role == manager
-      endpoint_mode: vip
+      endpoint_mode: dnsrr
 
   backend:
     image: sock-graveyard-backend:latest
