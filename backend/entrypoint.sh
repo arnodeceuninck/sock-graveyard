@@ -11,12 +11,7 @@ until PGPASSWORD=$POSTGRES_PASSWORD psql -h "postgres" -U "$POSTGRES_USER" -d "$
   sleep 2
 done
 
-echo "PostgreSQL is up - running migrations"
-
-# Run database migrations
-alembic upgrade head
-
-echo "Migrations complete - starting application"
+echo "PostgreSQL is up - starting application"
 
 # Start the application
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000

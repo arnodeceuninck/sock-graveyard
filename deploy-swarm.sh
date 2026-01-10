@@ -20,8 +20,33 @@ echo "✓ Environment variables loaded"
 echo "�🔄 Deploying stack with rolling updates..."
 docker stack deploy -c docker-compose.yml sock-graveyard
 
+echo "⏳ Waiting for postgres to be ready..."
+sleep 10
+
+echo "🗃️ Running database migrations..."
+docker run --rm \
+  --network sock-network \
+  -v "$(pwd)/backend/alembic:/app/alembic:ro" \
+  -v "$(pwd)/backend/alembic.ini:/app/alembic.ini:ro" \
+  -v "$(pwd)/backend/app:/app/app:ro" \
+  -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" \
+  -e POSTGRES_USER="${POSTGRES_USER}" \
+  -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+  -e POSTGRES_DB="${POSTGRES_DB}" \
+  sock-graveyard-backend:latest \
+  sh -c "
+    echo 'Waiting for database...';
+    until PGPASSWORD=\$POSTGRES_PASSWORD psql -h postgres -U \$POSTGRES_USER -d \$POSTGRES_DB -c '\q' 2>&1; do
+      echo 'PostgreSQL is unavailable - sleeping';
+      sleep 2;
+    done;
+    echo 'Running migrations...';
+    alembic upgrade head;
+    echo 'Migrations complete!';
+  "
+
 echo "⏳ Waiting for services to stabilize..."
-sleep 45
+sleep 30
 
 echo "📊 Service status:"
 docker service ls
