@@ -127,6 +127,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+      endpoint_mode: host
 
 volumes:
   postgres-data:
