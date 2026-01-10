@@ -103,10 +103,7 @@ services:
     image: nginx:alpine
     restart: always
     ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
+      - "80:80"
     networks:
       - sock-network
     volumes:
