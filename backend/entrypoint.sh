@@ -3,9 +3,10 @@
 set -e
 
 echo "Waiting for database to be ready..."
+echo "DB Config: host=postgres, user=$POSTGRES_USER, db=$POSTGRES_DB"
 
 # Wait for PostgreSQL to be ready
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h "postgres" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' 2>/dev/null; do
+until PGPASSWORD=$POSTGRES_PASSWORD psql -h "postgres" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' 2>&1; do
   echo "PostgreSQL is unavailable - sleeping"
   sleep 2
 done
