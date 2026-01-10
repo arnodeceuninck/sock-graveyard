@@ -20,6 +20,7 @@ services:
       retries: 5
 
   alembic-migration:
+    image: sock-graveyard-alembic-migration:latest
     build: ./backend
     command: alembic upgrade head
     depends_on:
@@ -33,6 +34,7 @@ services:
       - TZ=Europe/Amsterdam
 
   backend:
+    image: sock-graveyard-backend:latest
     build: ./backend
     restart: always
     depends_on:
@@ -67,6 +69,7 @@ services:
         delay: 5s
 
   frontend:
+    image: sock-graveyard-frontend:latest
     build: ./frontend
     restart: always
     depends_on:
