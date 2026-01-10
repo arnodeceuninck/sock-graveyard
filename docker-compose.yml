@@ -2,7 +2,12 @@ services:
   postgres:
     image: postgres:14-alpine
     restart: always
-    command: postgres -c listen_addresses='*'
+    command: 
+      - postgres
+      - -c
+      - listen_addresses=*
+      - -c
+      - max_connections=200
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -13,6 +18,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-sock_graveyard}
+      - POSTGRES_HOST_AUTH_METHOD=md5
+      - POSTGRES_INITDB_ARGS=--auth-host=md5
       - TZ=Europe/Amsterdam
     expose:
       - "5432"
