@@ -12,12 +12,18 @@ from app.auth import (
     get_password_hash,
     authenticate_user,
     create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
     get_current_user
 )
 from app.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 settings = get_settings()
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 
 class GoogleAuthRequest(BaseModel):
@@ -76,7 +82,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Create refresh token
+    refresh_token = create_refresh_token(db, user.id)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
 
 
 @router.get("/me", response_model=UserResponse)
@@ -121,7 +134,14 @@ def accept_terms(terms_data: AcceptTermsRequest, db: Session = Depends(get_db)):
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Create refresh token
+    refresh_token = create_refresh_token(db, user.id)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
 
 
 @router.post("/google", response_model=Token)
@@ -198,7 +218,14 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
             data={"sub": user.email}, expires_delta=access_token_expires
         )
         
-        return {"access_token": access_token, "token_type": "bearer"}
+        # Create refresh token
+        refresh_token = create_refresh_token(db, user.id)
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
         
     except ValueError as e:
         # Invalid token
@@ -238,4 +265,39 @@ def accept_terms_for_current_user(
     db.refresh(current_user)
     
     return {"message": "Terms accepted successfully"}
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_access_token(
+    token_request: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Refresh an access token using a refresh token.
+    Returns a new access token and refresh token.
+    """
+    # Verify the refresh token
+    user = verify_refresh_token(db, token_request.refresh_token)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create new access token
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    # Create new refresh token (rotate refresh tokens for security)
+    new_refresh_token = create_refresh_token(db, user.id)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
 

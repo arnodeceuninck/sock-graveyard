@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI, saveToken, getToken, removeToken } from '../services/api';
+import { authAPI, saveToken, getToken, removeToken, saveRefreshToken, removeRefreshToken } from '../services/api';
 import { User, LoginRequest, RegisterRequest } from '../types';
 import TermsAcceptanceModal from '../components/TermsAcceptanceModal';
 
@@ -41,7 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTutorialCompleted(tutorialStatus === 'true');
     } catch (error) {
       console.error('Auth check failed:', error);
+      // If auth check fails, clear both tokens
       await removeToken();
+      await removeRefreshToken();
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (data: LoginRequest) => {
     const response = await authAPI.login(data);
     await saveToken(response.access_token);
+    await saveRefreshToken(response.refresh_token);
     const userData = await authAPI.me();
     setUser(userData);
   };
@@ -62,12 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const googleLogin = async (idToken: string) => {
     const response = await authAPI.googleAuth(idToken, false, false);
     await saveToken(response.access_token);
+    await saveRefreshToken(response.refresh_token);
     const userData = await authAPI.me();
     setUser(userData);
   };
 
   const logout = async () => {
     await removeToken();
+    await removeRefreshToken();
     setUser(null);
   };
 

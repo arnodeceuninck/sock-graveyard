@@ -55,3 +55,16 @@ class Match(Base):
     user = relationship("User", backref="matches")
     sock1 = relationship("Sock", foreign_keys=[sock1_id], back_populates="matches_as_sock1")
     sock2 = relationship("Sock", foreign_keys=[sock2_id], back_populates="matches_as_sock2")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", backref="refresh_tokens")

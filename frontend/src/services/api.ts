@@ -10,6 +10,7 @@ const api = axios.create({
 
 // Token management
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // Check if we're on web or native
 const isWeb = Platform.OS === 'web';
@@ -47,6 +48,31 @@ export const removeToken = async () => {
   }
 };
 
+// Refresh token management
+export const saveRefreshToken = async (token: string) => {
+  if (isWeb) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+  }
+};
+
+export const getRefreshToken = async () => {
+  if (isWeb) {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  } else {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  }
+};
+
+export const removeRefreshToken = async () => {
+  if (isWeb) {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  }
+};
+
 // Add token to requests
 api.interceptors.request.use(async (config) => {
   const token = await getToken();
@@ -55,6 +81,91 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Response interceptor to handle token refresh on 401 errors
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If error is 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = await getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Call refresh endpoint
+        const response = await axios.post<AuthResponse>(
+          `${API_BASE_URL}/auth/refresh`,
+          { refresh_token: refreshToken }
+        );
+
+        const { access_token, refresh_token: newRefreshToken } = response.data;
+
+        // Save new tokens
+        await saveToken(access_token);
+        await saveRefreshToken(newRefreshToken);
+
+        // Update authorization header
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+        // Process queued requests
+        processQueue();
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, clear tokens and reject all queued requests
+        processQueue(refreshError);
+        await removeToken();
+        await removeRefreshToken();
+        
+        // Optionally, trigger a logout event or redirect to login
+        // You might want to dispatch an event here that AuthContext can listen to
+        
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Auth API
 export const authAPI = {
