@@ -225,6 +225,14 @@ Find your IP:
 - Windows: `ipconfig`
 - Mac/Linux: `ifconfig`
 
+## Deployment
+Fix env files, you can work this out yourself (do not forget sign in with google credentials)
+```
+docker swarm init
+chmod +x deploy-swarm.sh
+./deploy-swarm.sh
+```
+
 ## Troubleshooting
 
 ### Backend Issues
