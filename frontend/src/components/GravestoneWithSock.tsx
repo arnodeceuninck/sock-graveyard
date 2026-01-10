@@ -22,15 +22,12 @@ export default function GravestoneWithSock({
       <Image
         source={require('../../assets/empty-gravestone.png')}
         style={[styles.gravestoneImage, gravestoneStyle, !sockLoaded && styles.hidden]}
-        contentFit="contain"
-        cachePolicy="memory-disk"
+        resizeMode="contain"
       />
       <Image
         source={{ uri: sockImageUri }}
         style={[styles.sockOnGravestone, sockStyle, !sockLoaded && styles.hidden]}
-        contentFit="contain"
-        cachePolicy="memory-disk"
-        transition={200}
+        resizeMode="contain"
         onLoad={() => setSockLoaded(true)}
       />
     </View>
