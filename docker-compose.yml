@@ -103,7 +103,10 @@ services:
     image: nginx:alpine
     restart: always
     ports:
-      - "80:80"
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
     networks:
       - sock-network
     volumes:
@@ -127,7 +130,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-      endpoint_mode: host
 
 volumes:
   postgres-data:
