@@ -7,8 +7,7 @@ services:
     networks:
       - sock-network
     env_file:
-      - path: ./.env
-        required: false
+      - ./.env
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -24,13 +23,11 @@ services:
     build: ./backend
     command: alembic upgrade head
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
       - sock-network
     env_file:
-      - path: ./.env
-        required: false
+      - ./.env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
       - TZ=Europe/Amsterdam
@@ -39,17 +36,14 @@ services:
     build: ./backend
     restart: always
     depends_on:
-      postgres:
-        condition: service_started
-      alembic-migration:
-        condition: service_completed_successfully
+      - postgres
+      - alembic-migration
     volumes:
       - uploads:/app/uploads
     networks:
       - sock-network
     env_file:
-      - path: ./.env
-        required: false
+      - ./.env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
       - UPLOAD_DIR=/app/uploads
