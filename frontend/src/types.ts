@@ -13,6 +13,7 @@ export interface Sock {
   is_matched: boolean;
   created_at: string;
   color_palette?: string | null;  // JSON array of hex color codes
+  is_processing_complete?: boolean;  // Whether background removal and color extraction is complete
 }
 
 export interface SockMatch {

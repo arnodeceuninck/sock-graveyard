@@ -263,7 +263,17 @@ async def upload_sock(
         settings.upload_dir
     )
     
-    return new_sock
+    # Create response with processing status
+    response_dict = {
+        "id": new_sock.id,
+        "user_sequence_id": new_sock.user_sequence_id,
+        "image_path": new_sock.image_path,
+        "is_matched": new_sock.is_matched,
+        "created_at": new_sock.created_at,
+        "color_palette": new_sock.color_palette,
+        "is_processing_complete": False  # Processing just started
+    }
+    return response_dict
 
 
 @router.get("/list", response_model=List[SockResponse])
@@ -277,7 +287,21 @@ def list_unmatched_socks(
         Sock.is_matched == False
     ).order_by(Sock.created_at.desc()).all()
     
-    return socks
+    # Add processing status to each sock
+    response_list = []
+    for sock in socks:
+        response_dict = {
+            "id": sock.id,
+            "user_sequence_id": sock.user_sequence_id,
+            "image_path": sock.image_path,
+            "is_matched": sock.is_matched,
+            "created_at": sock.created_at,
+            "color_palette": sock.color_palette,
+            "is_processing_complete": sock.image_no_bg_path is not None and sock.color_palette is not None
+        }
+        response_list.append(response_dict)
+    
+    return response_list
 
 
 @router.get("/{sock_id}", response_model=SockResponse)
@@ -302,7 +326,17 @@ def get_sock(
             detail="Not authorized to access this sock"
         )
     
-    return sock
+    # Create response with processing status
+    response_dict = {
+        "id": sock.id,
+        "user_sequence_id": sock.user_sequence_id,
+        "image_path": sock.image_path,
+        "is_matched": sock.is_matched,
+        "created_at": sock.created_at,
+        "color_palette": sock.color_palette,
+        "is_processing_complete": sock.image_no_bg_path is not None and sock.color_palette is not None
+    }
+    return response_dict
 
 
 @router.get("/{sock_id}/image")

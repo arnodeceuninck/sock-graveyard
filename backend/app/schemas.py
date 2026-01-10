@@ -35,6 +35,7 @@ class SockResponse(BaseModel):
     is_matched: bool
     created_at: datetime
     color_palette: Optional[str] = None  # JSON array of hex color codes
+    is_processing_complete: bool = False  # Whether background removal and color extraction is complete
     
     class Config:
         from_attributes = True

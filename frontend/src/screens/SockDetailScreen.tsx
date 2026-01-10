@@ -175,12 +175,23 @@ export default function SockDetailScreen({ route, navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Eternal Record</Text>
 
-          <GravestoneWithSock
-            sockImageUri={socksAPI.getImageNoBgUrl(sock.id, authToken)}
-            style={styles.gravestoneWrapper}
-            gravestoneStyle={styles.gravestoneImage}
-            sockStyle={styles.sockOnGravestone}
-          />
+          {sock.is_processing_complete === false ? (
+            <View style={styles.processingContainer}>
+              <Text style={styles.processingText}>
+                Carving tombstone...
+              </Text>
+              <Text style={styles.processingSubtext}>
+                Extra info is being extracted. You can check back later.
+              </Text>
+            </View>
+          ) : (
+            <GravestoneWithSock
+              sockImageUri={socksAPI.getImageNoBgUrl(sock.id, authToken)}
+              style={styles.gravestoneWrapper}
+              gravestoneStyle={styles.gravestoneImage}
+              sockStyle={styles.sockOnGravestone}
+            />
+          )}
           
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Entered Graveyard:</Text>
@@ -199,7 +210,7 @@ export default function SockDetailScreen({ route, navigation }: any) {
             </Text>
           </View>
 
-          {sock.color_palette && (() => {
+          {sock.is_processing_complete !== false && sock.color_palette && (() => {
             try {
               const colors = JSON.parse(sock.color_palette);
               if (Array.isArray(colors) && colors.length > 0) {
@@ -481,5 +492,32 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     color: theme.colors.textSecondary,
     fontSize: 16,
+  },
+  processingContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.tombstone,
+    borderStyle: 'dashed',
+  },
+  processingEmoji: {
+    fontSize: 48,
+    marginBottom: theme.spacing.sm,
+  },
+  processingText: {
+    color: theme.colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  processingSubtext: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
