@@ -2,30 +2,29 @@
 
 set -e
 
-echo "🚀 Starting deployment with rolling updates..."
+echo "🚀 Starting high-availability deployment with Docker Swarm..."
 
 echo "📥 Pulling latest code..."
 git pull
 
-echo "🔨 Building and tagging images..."
+echo "🔨 Building new images..."
 docker compose build --pull
 
-echo "🔄 Deploying with rolling update..."
+echo "🔄 Deploying stack with rolling updates..."
 docker stack deploy -c docker-compose.yml sock-graveyard
 
 echo "⏳ Waiting for services to stabilize..."
-sleep 30
+sleep 45
 
 echo "📊 Service status:"
 docker service ls
 
 echo ""
-echo "🔍 Backend service details:"
-docker service ps sock-graveyard_backend --no-trunc
-
-echo ""
-echo "🔍 Frontend service details:"
-docker service ps sock-graveyard_frontend --no-trunc
+echo "🔍 Detailed status:"
+docker service ps sock-graveyard_backend --no-trunc | head -5
+docker service ps sock-graveyard_frontend --no-trunc | head -5
+docker service ps sock-graveyard_nginx --no-trunc | head -3
 
 echo ""
 echo "✅ Deployment complete!"
+echo "Site available at: http://socks.arnodece.com"

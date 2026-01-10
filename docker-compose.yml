@@ -19,27 +19,12 @@ services:
       timeout: 5s
       retries: 5
 
-  alembic-migration:
-    image: sock-graveyard-alembic-migration:latest
-    build: ./backend
-    command: alembic upgrade head
-    depends_on:
-      - postgres
-    networks:
-      - sock-network
-    env_file:
-      - ./.env
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
-      - TZ=Europe/Amsterdam
-
   backend:
     image: sock-graveyard-backend:latest
     build: ./backend
     restart: always
     depends_on:
       - postgres
-      - alembic-migration
     volumes:
       - uploads:/app/uploads
     networks:
@@ -67,6 +52,11 @@ services:
       rollback_config:
         parallelism: 1
         delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   frontend:
     image: sock-graveyard-frontend:latest
@@ -95,6 +85,11 @@ services:
       rollback_config:
         parallelism: 1
         delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   nginx:
     image: nginx:alpine
@@ -116,3 +111,4 @@ volumes:
 networks:
   sock-network:
     driver: overlay
+    attachable: true
