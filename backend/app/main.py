@@ -125,7 +125,7 @@ if settings.enable_tracing:
 @app.get("/")
 def root():
     """Root endpoint."""
-     logger.info("Root endpoint accessed")
+    logger.info("Root endpoint accessed")
     return {"message": "Welcome to Sock Graveyard API"}
 
 
