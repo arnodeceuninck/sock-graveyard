@@ -101,11 +101,14 @@ services:
         max_attempts: 3
         window: 120s
 
-  nginx:
+nginx:
     image: nginx:alpine
     restart: always
     ports:
-      - "80:80"
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host  # <--- This is the key change
     networks:
       - sock-network
     volumes:
@@ -118,19 +121,9 @@ services:
     deploy:
       replicas: 1
       endpoint_mode: dnsrr
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
       placement:
         constraints:
           - node.role == manager
-
 volumes:
   postgres-data:
   uploads:
