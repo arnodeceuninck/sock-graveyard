@@ -234,7 +234,7 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
         # Create refresh token
         refresh_token = create_refresh_token(db, user.id)
         
-            log_with_context(logger, "info", "Google auth successful", email=email, user_id=user.id, is_new_user=is_new_user, event="google_auth_success")
+        log_with_context(logger, "info", "Google auth successful", email=email, user_id=user.id, is_new_user=is_new_user, event="google_auth_success")
         
         return {
             "access_token": access_token,
@@ -244,14 +244,14 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
         
     except ValueError as e:
         # Invalid token
-            log_error(logger, "Google auth failed - invalid token", exc=e, event="google_auth_error", reason="invalid_token")
+        log_error(logger, "Google auth failed - invalid token", exc=e, event="google_auth_error", reason="invalid_token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid Google token: {str(e)}"
         )
     except Exception as e:
         # Other errors
-            log_error(logger, "Google auth failed with exception", exc=e, event="google_auth_error")
+        log_error(logger, "Google auth failed with exception", exc=e, event="google_auth_error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication failed: {str(e)}"
