@@ -101,7 +101,7 @@ services:
         max_attempts: 3
         window: 120s
 
-nginx:
+  nginx:
     image: nginx:alpine
     restart: always
     ports:
