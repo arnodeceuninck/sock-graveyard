@@ -117,6 +117,7 @@ services:
       - frontend
     deploy:
       replicas: 1
+      endpoint_mode: dnsrr
       restart_policy:
         condition: on-failure
         delay: 5s
