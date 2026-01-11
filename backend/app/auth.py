@@ -9,9 +9,11 @@ from app.config import get_settings
 from app.database import get_db
 from app.models import User, RefreshToken
 from app.schemas import TokenData
+from app.logging_config import setup_logging, log_with_context, log_error
 import secrets
 
 settings = get_settings()
+logger = setup_logging(service_name="auth", level="INFO")
 
 # Password hashing with argon2 (includes salt automatically)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -108,12 +110,16 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password."""
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        log_with_context(logger, "warning", "Authentication failed - user not found", email=email, event="auth_failed", reason="user_not_found")
         return None
     # For OAuth users (no password), only authenticate via OAuth
     if not user.hashed_password:
+        log_with_context(logger, "warning", "Authentication failed - OAuth user", email=email, event="auth_failed", reason="oauth_user")
         return None
     if not verify_password(password, user.hashed_password):
+        log_with_context(logger, "warning", "Authentication failed - invalid password", email=email, event="auth_failed", reason="invalid_password")
         return None
+    log_with_context(logger, "info", "User authenticated successfully", email=email, user_id=user.id, event="auth_success")
     return user
 
 
@@ -128,13 +134,16 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         email: str = payload.get("sub")
         if email is None:
+            log_with_context(logger, "warning", "Invalid token - missing email", event="token_validation_failed", reason="missing_email")
             raise credentials_exception
         token_data = TokenData(email=email)
     except JWTError:
+        log_with_context(logger, "warning", "Invalid token - JWT error", event="token_validation_failed", reason="jwt_error")
         raise credentials_exception
     
     user = db.query(User).filter(User.email == token_data.email).first()
     if user is None:
+        log_with_context(logger, "warning", "User not found for token", email=token_data.email, event="token_validation_failed", reason="user_not_found")
         raise credentials_exception
     return user
 

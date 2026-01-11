@@ -17,9 +17,11 @@ from app.auth import (
     get_current_user
 )
 from app.config import get_settings
+from app.logging_config import setup_logging, log_with_context, log_error
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 settings = get_settings()
+logger = setup_logging(service_name="auth_router", level="INFO")
 
 
 class RefreshTokenRequest(BaseModel):
@@ -40,29 +42,35 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     # Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
+        log_with_context(logger, "warning", "Registration failed - email already exists", email=user_data.email, event="registration_failed", reason="email_exists")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
     
-    # Create new user with hashed password and accepted terms
-    hashed_password = get_password_hash(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_password,
-        terms_accepted=True,
-        terms_accepted_at=datetime.utcnow(),
-        terms_version="1.0",
-        privacy_accepted=True,
-        privacy_accepted_at=datetime.utcnow(),
-        privacy_version="1.0"
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return new_user
+    try:
+        # Create new user with hashed password and accepted terms
+        hashed_password = get_password_hash(user_data.password)
+        new_user = User(
+            email=user_data.email,
+            hashed_password=hashed_password,
+            terms_accepted=True,
+            terms_accepted_at=datetime.utcnow(),
+            terms_version="1.0",
+            privacy_accepted=True,
+            privacy_accepted_at=datetime.utcnow(),
+            privacy_version="1.0"
+        )
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        log_with_context(logger, "info", "User registered successfully", email=user_data.email, user_id=new_user.id, event="registration_success")
+        return new_user
+    except Exception as exc:
+        log_error(logger, "Registration failed with exception", exc=exc, email=user_data.email, event="registration_error")
+        raise
 
 
 @router.post("/login", response_model=Token)
@@ -70,6 +78,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     """Login and receive an access token."""
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
+        log_with_context(logger, "warning", "Login failed", email=form_data.username, event="login_failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -84,6 +93,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     
     # Create refresh token
     refresh_token = create_refresh_token(db, user.id)
+    
+    log_with_context(logger, "info", "User logged in successfully", email=user.email, user_id=user.id, event="login_success")
     
     return {
         "access_token": access_token,
@@ -171,6 +182,7 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
         # Get user email from token
         email = idinfo.get('email')
         if not email:
+            log_with_context(logger, "warning", "Google auth failed - no email", event="google_auth_failed", reason="no_email")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email not provided by Google"
@@ -196,6 +208,7 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
             db.add(user)
             db.commit()
             db.refresh(user)
+            log_with_context(logger, "info", "New user created via Google auth", email=email, user_id=user.id, event="google_registration_success")
         else:
             # For existing users, update terms if provided (but don't require)
             if auth_data.terms_accepted and not user.terms_accepted:
@@ -221,6 +234,8 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
         # Create refresh token
         refresh_token = create_refresh_token(db, user.id)
         
+            log_with_context(logger, "info", "Google auth successful", email=email, user_id=user.id, is_new_user=is_new_user, event="google_auth_success")
+        
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -229,12 +244,14 @@ def google_auth(auth_data: GoogleAuthRequest, db: Session = Depends(get_db)):
         
     except ValueError as e:
         # Invalid token
+            log_error(logger, "Google auth failed - invalid token", exc=e, event="google_auth_error", reason="invalid_token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid Google token: {str(e)}"
         )
     except Exception as e:
         # Other errors
+            log_error(logger, "Google auth failed with exception", exc=e, event="google_auth_error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication failed: {str(e)}"
@@ -280,6 +297,7 @@ def refresh_access_token(
     user = verify_refresh_token(db, token_request.refresh_token)
     
     if not user:
+        log_with_context(logger, "warning", "Token refresh failed - invalid token", event="token_refresh_failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
@@ -294,6 +312,8 @@ def refresh_access_token(
     
     # Create new refresh token (rotate refresh tokens for security)
     new_refresh_token = create_refresh_token(db, user.id)
+    
+    log_with_context(logger, "info", "Token refreshed successfully", email=user.email, user_id=user.id, event="token_refresh_success")
     
     return {
         "access_token": access_token,

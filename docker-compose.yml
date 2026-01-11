@@ -41,6 +41,7 @@ services:
       - uploads:/app/uploads
     networks:
       - sock-network
+      - observability_net
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-sock_graveyard}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -49,6 +50,10 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - UPLOAD_DIR=/app/uploads
       - TZ=Europe/Amsterdam
+      - OTLP_ENDPOINT=http://tempo:4318/v1/traces
+      - SERVICE_NAME=sock-graveyard-backend
+      - ENVIRONMENT=development
+      - ENABLE_TRACING=true
     expose:
       - "8000"
     healthcheck:
@@ -136,3 +141,5 @@ networks:
   sock-network:
     driver: overlay
     attachable: true
+  observability_net:
+    external: true

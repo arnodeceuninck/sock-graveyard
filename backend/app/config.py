@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     # Model
     embedding_dim: int = 1280  # EfficientNet-B0 output dimension
     
+    # Observability
+    otlp_endpoint: str = "http://localhost:4318/v1/traces"  # OTLP HTTP endpoint for traces
+    service_name: str = "sock-graveyard-backend"
+    environment: str = "development"
+    enable_tracing: bool = True
+    
     class Config:
         env_file = ".env"
 

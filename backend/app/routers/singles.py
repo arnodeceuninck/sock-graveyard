@@ -2,6 +2,7 @@ import os
 import uuid
 import hashlib
 import json
+import time
 from io import BytesIO
 from typing import List, Optional
 from collections import Counter
@@ -19,9 +20,11 @@ from app.schemas import SockResponse, SockMatch, MatchCreate, MatchResponse
 from app.auth import get_current_user
 from app.embedding import get_embedding_service, EmbeddingService
 from app.config import get_settings
+from app.logging_config import setup_logging, log_with_context, log_error
 
 router = APIRouter(prefix="/singles", tags=["singles"])
 settings = get_settings()
+logger = setup_logging(service_name="singles", level="INFO")
 
 # Ensure upload directory exists
 os.makedirs(settings.upload_dir, exist_ok=True)
@@ -157,6 +160,7 @@ def extract_color_palette(image: Image.Image, num_colors: int = 5) -> List[str]:
 
 def process_background_removal(sock_id: int, file_path: str, upload_dir: str):
     """Background task to remove background from uploaded sock image."""
+    start_time = time.time()
     try:
         # Generate filename for background-removed version
         unique_filename_no_bg = f"{uuid.uuid4()}_no_bg.png"
@@ -187,11 +191,20 @@ def process_background_removal(sock_id: int, file_path: str, upload_dir: str):
                 sock.image_no_bg_path = file_path_no_bg
                 sock.color_palette = color_palette_json
                 db.commit()
-                print(f"Background removed and color palette extracted for sock {sock_id}: {color_palette}")
+                duration_ms = (time.time() - start_time) * 1000
+                log_with_context(logger, "info", "Background removal completed", 
+                    sock_id=sock_id, 
+                    colors_found=len(color_palette) if color_palette else 0,
+                    duration_ms=round(duration_ms, 2),
+                    event="background_removal_success")
         finally:
             db.close()
     except Exception as e:
-        print(f"Failed to remove background for sock {sock_id}: {str(e)}")
+        duration_ms = (time.time() - start_time) * 1000
+        log_error(logger, "Background removal failed", exc=e, 
+            sock_id=sock_id, 
+            duration_ms=round(duration_ms, 2),
+            event="background_removal_error")
 
 
 @router.post("/upload", response_model=SockResponse, status_code=status.HTTP_201_CREATED)
@@ -203,10 +216,20 @@ async def upload_sock(
     embedding_service: EmbeddingService = Depends(get_embedding_service)
 ):
     """Upload a sock image and create its embedding."""
-    print(f"Received file: {file.filename}, content_type: {file.content_type}")
+    start_time = time.time()
+    log_with_context(logger, "info", "Sock upload started", 
+        user_id=current_user.id, 
+        filename=file.filename, 
+        content_type=file.content_type,
+        event="upload_started")
     
     # Validate file type
     if not file.content_type or not file.content_type.startswith("image/"):
+        log_with_context(logger, "warning", "Invalid file type", 
+            user_id=current_user.id, 
+            content_type=file.content_type,
+            event="upload_failed", 
+            reason="invalid_type")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an image"
@@ -231,6 +254,10 @@ async def upload_sock(
         # Clean up file if embedding fails
         if os.path.exists(file_path):
             os.remove(file_path)
+        log_error(logger, "Embedding creation failed", exc=e, 
+            user_id=current_user.id, 
+            filename=file.filename,
+            event="embedding_error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create embedding: {str(e)}"
@@ -262,6 +289,14 @@ async def upload_sock(
         file_path,
         settings.upload_dir
     )
+    
+    duration_ms = (time.time() - start_time) * 1000
+    log_with_context(logger, "info", "Sock upload successful", 
+        user_id=current_user.id, 
+        sock_id=new_sock.id,
+        user_sequence_id=next_sequence_id,
+        duration_ms=round(duration_ms, 2),
+        event="upload_success")
     
     # Create response with processing status
     response_dict = {
@@ -314,6 +349,10 @@ def get_sock(
     sock = db.query(Sock).filter(Sock.id == sock_id).first()
     
     if not sock:
+        log_with_context(logger, "warning", "Sock not found", 
+            sock_id=sock_id, 
+            user_id=current_user.id,
+            event="sock_not_found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Sock not found"
@@ -321,6 +360,11 @@ def get_sock(
     
     # Verify ownership
     if sock.owner_id != current_user.id:
+        log_with_context(logger, "warning", "Unauthorized sock access", 
+            sock_id=sock_id, 
+            user_id=current_user.id,
+            owner_id=sock.owner_id,
+            event="unauthorized_access")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this sock"
@@ -518,6 +562,7 @@ async def search_by_sock_id(
     limit: int = 10
 ):
     """Search for similar socks using an existing sock's embedding."""
+    start_time = time.time()
     # Get the source sock
     sock = db.query(Sock).filter(Sock.id == sock_id).first()
     if not sock:
@@ -553,6 +598,15 @@ async def search_by_sock_id(
     # Sort by similarity (highest first) and limit results
     matches.sort(key=lambda x: x.similarity, reverse=True)
     
+    duration_ms = (time.time() - start_time) * 1000
+    log_with_context(logger, "info", "Similarity search completed",
+        sock_id=sock_id,
+        user_id=current_user.id,
+        candidates_checked=len(socks),
+        matches_found=len(matches[:limit]),
+        duration_ms=round(duration_ms, 2),
+        event="similarity_search")
+    
     return matches[:limit]
 
 
@@ -573,6 +627,11 @@ def delete_sock(
     
     # Verify ownership
     if sock.owner_id != current_user.id:
+        log_with_context(logger, "warning", "Unauthorized sock deletion attempt",
+            sock_id=sock_id,
+            user_id=current_user.id,
+            owner_id=sock.owner_id,
+            event="unauthorized_delete")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this sock"
@@ -580,6 +639,10 @@ def delete_sock(
     
     # Check if sock is matched
     if sock.is_matched:
+        log_with_context(logger, "warning", "Attempt to delete matched sock",
+            sock_id=sock_id,
+            user_id=current_user.id,
+            event="delete_matched_sock")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete a matched sock. Delete the match first."
@@ -591,7 +654,10 @@ def delete_sock(
             os.remove(sock.image_path)
         except Exception as e:
             # Log error but continue with database deletion
-            print(f"Failed to delete image file {sock.image_path}: {str(e)}")
+            log_error(logger, "Failed to delete image file", exc=e,
+                sock_id=sock_id,
+                image_path=sock.image_path,
+                event="image_delete_error")
     
     # Delete the background-removed image file if it exists
     if sock.image_no_bg_path and os.path.exists(sock.image_no_bg_path):
@@ -599,10 +665,18 @@ def delete_sock(
             os.remove(sock.image_no_bg_path)
         except Exception as e:
             # Log error but continue with database deletion
-            print(f"Failed to delete background-removed image file {sock.image_no_bg_path}: {str(e)}")
+            log_error(logger, "Failed to delete background-removed image", exc=e,
+                sock_id=sock_id,
+                image_path=sock.image_no_bg_path,
+                event="bg_image_delete_error")
     
     # Delete the sock from database
     db.delete(sock)
     db.commit()
+    
+    log_with_context(logger, "info", "Sock deleted successfully",
+        sock_id=sock_id,
+        user_id=current_user.id,
+        event="sock_deleted")
     
     return None

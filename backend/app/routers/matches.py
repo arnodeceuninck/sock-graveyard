@@ -5,8 +5,10 @@ from app.database import get_db
 from app.models import User, Sock, Match
 from app.schemas import MatchCreate, MatchResponse
 from app.auth import get_current_user
+from app.logging_config import setup_logging, log_with_context, log_error
 
 router = APIRouter(prefix="/matches", tags=["matches"])
+logger = setup_logging(service_name="matches", level="INFO")
 
 
 @router.get("")
@@ -62,6 +64,10 @@ def get_match(
     match = db.query(Match).filter(Match.id == match_id).first()
     
     if not match:
+        log_with_context(logger, "warning", "Match not found",
+            match_id=match_id,
+            user_id=current_user.id,
+            event="match_not_found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Match not found"
@@ -69,6 +75,10 @@ def get_match(
     
     # Verify ownership
     if match.sock1.owner_id != current_user.id or match.sock2.owner_id != current_user.id:
+        log_with_context(logger, "warning", "Unauthorized match access",
+            match_id=match_id,
+            user_id=current_user.id,
+            event="unauthorized_access")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this match"
@@ -89,12 +99,24 @@ def create_match(
     sock2 = db.query(Sock).filter(Sock.id == match_data.sock2_id).first()
     
     if not sock1 or not sock2:
+        log_with_context(logger, "warning", "Match creation failed - sock not found",
+            user_id=current_user.id,
+            sock1_id=match_data.sock1_id,
+            sock2_id=match_data.sock2_id,
+            event="match_create_failed",
+            reason="sock_not_found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="One or both socks not found"
         )
     
     if sock1.owner_id != current_user.id or sock2.owner_id != current_user.id:
+        log_with_context(logger, "warning", "Match creation failed - unauthorized",
+            user_id=current_user.id,
+            sock1_id=match_data.sock1_id,
+            sock2_id=match_data.sock2_id,
+            event="match_create_failed",
+            reason="unauthorized")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to match these socks"
@@ -102,6 +124,12 @@ def create_match(
     
     # Check if socks are already matched
     if sock1.is_matched or sock2.is_matched:
+        log_with_context(logger, "warning", "Match creation failed - sock already matched",
+            user_id=current_user.id,
+            sock1_id=match_data.sock1_id,
+            sock2_id=match_data.sock2_id,
+            event="match_create_failed",
+            reason="already_matched")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="One or both socks are already matched"
@@ -139,6 +167,13 @@ def create_match(
     _ = new_match.sock1
     _ = new_match.sock2
     
+    log_with_context(logger, "info", "Match created successfully",
+        user_id=current_user.id,
+        match_id=new_match.id,
+        sock1_id=match_data.sock1_id,
+        sock2_id=match_data.sock2_id,
+        event="match_created")
+    
     return new_match
 
 
@@ -167,6 +202,10 @@ def delete_match(
     
     # Verify ownership
     if match.sock1.owner_id != current_user.id or match.sock2.owner_id != current_user.id:
+        log_with_context(logger, "warning", "Unauthorized match deletion",
+            match_id=match_id,
+            user_id=current_user.id,
+            event="unauthorized_delete")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this match"
@@ -178,6 +217,10 @@ def delete_match(
         match.sock2.is_matched = False
         db.delete(match)
         db.commit()
+        log_with_context(logger, "info", "Match decoupled successfully",
+            user_id=current_user.id,
+            match_id=match_id,
+            event="match_decoupled")
     else:
         # Delete both socks and the match
         sock1 = match.sock1
@@ -189,7 +232,10 @@ def delete_match(
                 try:
                     os.remove(sock.image_path)
                 except Exception as e:
-                    print(f"Failed to delete image file {sock.image_path}: {str(e)}")
+                    log_error(logger, "Failed to delete image file", exc=e,
+                        sock_id=sock.id,
+                        image_path=sock.image_path,
+                        event="image_delete_error")
         
         # Delete the match first (due to foreign key constraints)
         db.delete(match)
@@ -197,5 +243,9 @@ def delete_match(
         db.delete(sock1)
         db.delete(sock2)
         db.commit()
+        log_with_context(logger, "info", "Match and socks deleted successfully",
+            user_id=current_user.id,
+            match_id=match_id,
+            event="match_deleted")
     
     return None
