@@ -52,5 +52,42 @@ docker service ps sock-graveyard_frontend --no-trunc | head -5
 docker service ps sock-graveyard_nginx --no-trunc | head -3
 
 echo ""
-echo "✅ Deployment complete!"
-echo "Site available at: http://socks.arnodece.com"
+echo "🔍 Checking for failed services..."
+
+# Check if any services have failed tasks
+FAILED_BACKEND=$(docker service ps sock-graveyard_backend --filter "desired-state=running" --format "{{.CurrentState}}" | grep -c "Failed" || true)
+FAILED_FRONTEND=$(docker service ps sock-graveyard_frontend --filter "desired-state=running" --format "{{.CurrentState}}" | grep -c "Failed" || true)
+FAILED_NGINX=$(docker service ps sock-graveyard_nginx --filter "desired-state=running" --format "{{.CurrentState}}" | grep -c "Failed" || true)
+
+HAS_FAILURES=false
+
+if [ "$FAILED_BACKEND" -gt 0 ]; then
+  echo "❌ Backend service has failed tasks!"
+  echo "Recent backend logs:"
+  docker service logs sock-graveyard_backend --tail 30
+  HAS_FAILURES=true
+fi
+
+if [ "$FAILED_FRONTEND" -gt 0 ]; then
+  echo "❌ Frontend service has failed tasks!"
+  echo "Recent frontend logs:"
+  docker service logs sock-graveyard_frontend --tail 30
+  HAS_FAILURES=true
+fi
+
+if [ "$FAILED_NGINX" -gt 0 ]; then
+  echo "❌ Nginx service has failed tasks!"
+  echo "Recent nginx logs:"
+  docker service logs sock-graveyard_nginx --tail 30
+  HAS_FAILURES=true
+fi
+
+echo ""
+if [ "$HAS_FAILURES" = true ]; then
+  echo "❌ Deployment completed with failures!"
+  echo "Please check the logs above for error details."
+  exit 1
+else
+  echo "✅ Deployment complete!"
+  echo "Site available at: http://socks.arnodece.com"
+fi
