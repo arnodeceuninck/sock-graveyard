@@ -64,15 +64,21 @@ def setup_logging(service_name: str = "backend", level: str = "INFO") -> logging
     
     # Remove existing handlers to avoid duplicates
     logger.handlers.clear()
-    
-    # Create handler with JSON formatter
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JSONFormatter())
-    logger.addHandler(handler)
-    
+
+    # Create handler with JSON formatter (for structured logs)
+    json_handler = logging.StreamHandler(sys.stdout)
+    json_handler.setFormatter(JSONFormatter())
+    logger.addHandler(json_handler)
+
+    # Create handler with standard formatter (for human-readable logs in terminal)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S,%f')
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
     # Don't propagate to root to avoid duplicate logs
     logger.propagate = False
-    
+
     return logger
 
 
